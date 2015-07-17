@@ -17,22 +17,9 @@
 
         private void InitializeComponent()
         {
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.textBox1 = new InputKey("A");
             this.SuspendLayout();
-            // 
-            // textBox1
-            // 
-            this.textBox1.BackColor = System.Drawing.Color.Yellow;
-            this.textBox1.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.textBox1.Enabled = false;
-            this.textBox1.Location = new System.Drawing.Point(12, 12);
-            this.textBox1.MinimumSize = new System.Drawing.Size(30, 30);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.ReadOnly = true;
-            this.textBox1.Size = new System.Drawing.Size(30, 30);
-            this.textBox1.TabIndex = 0;
-            this.textBox1.Text = "A";
-            this.textBox1.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+
             // 
             // Form1
             // 

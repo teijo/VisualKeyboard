@@ -134,8 +134,6 @@ namespace VisualKeyboard
 
             AutoScaleMode = AutoScaleMode.Font;
             FormBorderStyle = FormBorderStyle.None;
-            Name = "Form1";
-            Text = "Form1";
             TopMost = true;
             MouseDown += new MouseEventHandler(Form1_MouseDown);
             AutoSize = true;

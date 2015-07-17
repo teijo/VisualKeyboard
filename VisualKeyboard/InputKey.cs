@@ -15,10 +15,8 @@ namespace VisualKeyboard
             Dock = DockStyle.Left;
             MinimumSize = new Size(30, 30);
             Text = Enum.GetName(key.GetType(), key);
-            Name = "InputKey_" + Text;
             ReadOnly = true;
             Size = new Size(30, 30);
-            TabIndex = 0;
             TextAlign = HorizontalAlignment.Center;
         }
 

@@ -2,6 +2,7 @@
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System;
+using System.Linq;
 
 namespace VisualKeyboard
 {
@@ -21,23 +22,51 @@ namespace VisualKeyboard
         [DllImport("user32.dll")]
         public static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, int vlc);
 
-        private void createInputKey(Keys key)
+        private Panel buildLayoutPanel(List<List<InputKey>> keyLayout)
         {
-            // Alt = 1, Ctrl = 2, Shift = 4, Win = 8
-            RegisterHotKey(this.Handle, (int)key, 0, (int)key);
-
-            InputKey inputKey = new InputKey(key);
-            this.Controls.Add(inputKey);
-            inputKeys.Add(key, inputKey);
+            FlowLayoutPanel columnPanel = new FlowLayoutPanel();
+            columnPanel.FlowDirection = FlowDirection.TopDown;
+            columnPanel.SuspendLayout();
+            columnPanel.AutoSize = true;
+            foreach (List<InputKey> row in keyLayout)
+            {
+                FlowLayoutPanel rowPanel = new FlowLayoutPanel();
+                rowPanel.FlowDirection = FlowDirection.LeftToRight;
+                rowPanel.BackColor = System.Drawing.Color.Pink;
+                rowPanel.SuspendLayout();
+                rowPanel.AutoSize = true;
+                foreach (InputKey input in row)
+                {
+                    rowPanel.Controls.Add(input);
+                }
+                rowPanel.ResumeLayout();
+                columnPanel.Controls.Add(rowPanel);
+            }
+            columnPanel.ResumeLayout();
+            return columnPanel;
         }
 
         #region Windows Form Designer generated code
 
         private void InitializeComponent()
         {
-            createInputKey(Keys.A);
-            createInputKey(Keys.B);
+            List<List<Keys>> keyConfig = new List<List<Keys>>();
+            keyConfig.Add(new List<Keys> { Keys.A, Keys.B });
+            keyConfig.Add(new List<Keys> { Keys.C, Keys.D, Keys.E });
 
+            List<List<InputKey>> layout = keyConfig.Select(row =>
+            {
+                return row.Select(key =>
+                {
+                    // Alt = 1, Ctrl = 2, Shift = 4, Win = 8
+                    RegisterHotKey(Handle, (int)key, 0, (int)key);
+                    InputKey inputKey = new InputKey(key);
+                    inputKeys.Add(key, inputKey);
+                    return inputKey;
+                }).ToList();
+            }).ToList();
+
+            this.Controls.Add(buildLayoutPanel(layout));
             this.SuspendLayout();
 
             // 
@@ -54,12 +83,12 @@ namespace VisualKeyboard
             this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Form1_MouseDown);
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
 
         #endregion
 
         private Dictionary<Keys, InputKey> inputKeys = new Dictionary<Keys, InputKey>();
+        private List<List<Keys>> keyLayout = new List<List<Keys>>();
     }
 }
 

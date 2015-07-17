@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Windows.Forms;
-using System.Runtime.InteropServices;
-using System;
 using System.Linq;
 
 namespace VisualKeyboard
@@ -73,7 +71,6 @@ namespace VisualKeyboard
             Name = "Form1";
             Text = "Form1";
             TopMost = true;
-            Load += new EventHandler(Form1_Load);
             MouseDown += new MouseEventHandler(Form1_MouseDown);
             AutoSize = true;
             ResumeLayout(false);

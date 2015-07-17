@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
+using Color = System.Drawing.Color;
 
 namespace VisualKeyboard
 {
@@ -7,29 +9,28 @@ namespace VisualKeyboard
     {
         public InputKey(Keys key)
         {
-            this.BackColor = System.Drawing.Color.Yellow;
-            this.BorderStyle = BorderStyle.None;
-            this.Enabled = false;
-            //this.Location = new System.Drawing.Point(12, 12);
-            this.Dock = DockStyle.Left;
-            this.MinimumSize = new System.Drawing.Size(30, 30);
-            this.Text = Enum.GetName(key.GetType(), key);
-            this.Name = "InputKey_" + this.Text;
-            this.ReadOnly = true;
-            this.Size = new System.Drawing.Size(30, 30);
-            this.TabIndex = 0;
-            this.TextAlign = HorizontalAlignment.Center;
+            BackColor = Color.Yellow;
+            BorderStyle = BorderStyle.None;
+            Enabled = false;
+            Dock = DockStyle.Left;
+            MinimumSize = new Size(30, 30);
+            Text = Enum.GetName(key.GetType(), key);
+            Name = "InputKey_" + Text;
+            ReadOnly = true;
+            Size = new Size(30, 30);
+            TabIndex = 0;
+            TextAlign = HorizontalAlignment.Center;
         }
 
         internal void Flash()
         {
-            this.BackColor = System.Drawing.Color.Red;
+            BackColor = Color.Red;
 
             var timer = new Timer();
             timer.Tick += (s, e) =>
             {
                 ((Timer)s).Stop();
-                this.BackColor = System.Drawing.Color.Yellow;
+                BackColor = Color.Yellow;
             };
             timer.Interval = 1000;
             timer.Start();

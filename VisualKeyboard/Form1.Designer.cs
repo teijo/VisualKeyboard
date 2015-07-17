@@ -67,22 +67,22 @@ namespace VisualKeyboard
                 }).ToList();
             }).ToList();
 
-            this.Controls.Add(buildLayoutPanel(layout));
-            this.SuspendLayout();
+            Controls.Add(buildLayoutPanel(layout));
+            SuspendLayout();
 
             // 
             // Form1
             // 
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.Name = "Form1";
-            this.Text = "Form1";
-            this.TopMost = true;
-            this.Load += new System.EventHandler(this.Form1_Load);
-            this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Form1_MouseDown);
-            this.AutoSize = true;
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            AutoScaleMode = AutoScaleMode.Font;
+            FormBorderStyle = FormBorderStyle.None;
+            Name = "Form1";
+            Text = "Form1";
+            TopMost = true;
+            Load += new EventHandler(Form1_Load);
+            MouseDown += new MouseEventHandler(Form1_MouseDown);
+            AutoSize = true;
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion

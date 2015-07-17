@@ -113,10 +113,11 @@ namespace VisualKeyboard
 
         private void InitializeComponent()
         {
-            List<List<Keys>> keyConfig = new List<List<Keys>>();
-            keyConfig.Add(new List<Keys> { Keys.Q, Keys.W, Keys.E, Keys.R, Keys.T, Keys.Y, Keys.U, Keys.I, Keys.O, Keys.P });
-            keyConfig.Add(new List<Keys> { Keys.A, Keys.S, Keys.D, Keys.F, Keys.G, Keys.H, Keys.J, Keys.K, Keys.L });
-            keyConfig.Add(new List<Keys> { Keys.Z, Keys.X, Keys.C, Keys.V, Keys.B, Keys.N, Keys.M });
+            List<List<Keys>> keyConfig = new List<List<Keys>> {
+                new List<Keys> { Keys.Q, Keys.W, Keys.E, Keys.R, Keys.T, Keys.Y, Keys.U, Keys.I, Keys.O, Keys.P },
+                new List<Keys> { Keys.A, Keys.S, Keys.D, Keys.F, Keys.G, Keys.H, Keys.J, Keys.K, Keys.L },
+                new List<Keys> { Keys.Z, Keys.X, Keys.C, Keys.V, Keys.B, Keys.N, Keys.M }
+            };
 
             List<List<InputKey>> layout = keyConfig.Select(row =>
             {

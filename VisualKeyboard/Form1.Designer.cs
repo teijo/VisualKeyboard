@@ -32,6 +32,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Text = "Form1";
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Form1_MouseDown);
         }
 
         #endregion

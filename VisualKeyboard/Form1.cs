@@ -44,11 +44,11 @@ namespace VisualKeyboard
         {
             if (m.Msg == 0x0312 && m.WParam.ToInt32() == KEY_ID)
             {
-                textBox1.BackColor = System.Drawing.Color.Red;
+                aInput.BackColor = System.Drawing.Color.Red;
                 var timer = new Timer();
                 timer.Tick += (s, e) => {
                     ((Timer)s).Stop();
-                    textBox1.BackColor = System.Drawing.Color.Yellow;
+                    aInput.BackColor = System.Drawing.Color.Yellow;
                 };
                 timer.Interval = 1000;
                 timer.Start();

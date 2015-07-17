@@ -17,7 +17,7 @@
 
         private void InitializeComponent()
         {
-            this.textBox1 = new InputKey("A");
+            this.aInput = new InputKey("A");
             this.SuspendLayout();
 
             // 
@@ -26,7 +26,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(284, 261);
-            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.aInput);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "Form1";
             this.Text = "Form1";
@@ -40,7 +40,7 @@
 
         #endregion
 
-        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.TextBox aInput;
     }
 }
 

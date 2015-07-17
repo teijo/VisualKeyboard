@@ -14,10 +14,53 @@ namespace VisualKeyboard
         [DllImportAttribute("user32.dll")]
         public static extern bool ReleaseCapture();
 
-        const int KEY_ID = 1;
+        [DllImport("user32.dll")]
+        static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc callback, IntPtr hInstance, uint threadId);
+
+        [DllImport("user32.dll")]
+        static extern bool UnhookWindowsHookEx(IntPtr hInstance);
+
+        [DllImport("user32.dll")]
+        static extern IntPtr CallNextHookEx(IntPtr idHook, int nCode, int wParam, IntPtr lParam);
+
+        [DllImport("kernel32.dll")]
+        static extern IntPtr LoadLibrary(string lpFileName);
+
+        private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
+
+        const int WH_KEYBOARD_LL = 13;
+        const int WM_KEYDOWN = 0x100;
+
+        private LowLevelKeyboardProc _proc = hookProc;
+
+        private static IntPtr hhook = IntPtr.Zero;
+
+        public void SetHook()
+        {
+            hhook = SetWindowsHookEx(WH_KEYBOARD_LL, _proc, LoadLibrary("User32"), 0);
+        }
+
+        public static void UnHook()
+        {
+            UnhookWindowsHookEx(hhook);
+        }
+
+        public static IntPtr hookProc(int code, IntPtr wParam, IntPtr lParam)
+        {
+            if (code >= 0 && wParam == (IntPtr)WM_KEYDOWN)
+            {
+                Keys keyId = (Keys)Marshal.ReadInt32(lParam);
+                if (inputKeys.ContainsKey(keyId))
+                {
+                    inputKeys[keyId].Flash();
+                }
+            }
+            return CallNextHookEx(hhook, code, (int)wParam, lParam);
+        }
 
         public Form1()
         {
+            SetHook();
             InitializeComponent();
         }
 
@@ -33,16 +76,6 @@ namespace VisualKeyboard
         private void Form1_Load(object sender, EventArgs e)
         {
 
-        }
-
-        protected override void WndProc(ref Message m)
-        {
-            Keys keyId = (Keys)m.WParam.ToInt32();
-            if (m.Msg == 0x0312 && inputKeys.ContainsKey(keyId))
-            {
-                inputKeys[keyId].Flash();
-            }
-            base.WndProc(ref m);
         }
 
         private void flowLayoutPanel1_Paint(object sender, PaintEventArgs e)

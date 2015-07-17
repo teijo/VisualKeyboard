@@ -19,9 +19,6 @@ namespace VisualKeyboard
             base.Dispose(disposing);
         }
 
-        [DllImport("user32.dll")]
-        public static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, int vlc);
-
         private Panel buildLayoutPanel(List<List<InputKey>> keyLayout)
         {
             FlowLayoutPanel columnPanel = new FlowLayoutPanel();
@@ -59,8 +56,6 @@ namespace VisualKeyboard
             {
                 return row.Select(key =>
                 {
-                    // Alt = 1, Ctrl = 2, Shift = 4, Win = 8
-                    RegisterHotKey(Handle, (int)key, 0, (int)key);
                     InputKey inputKey = new InputKey(key);
                     inputKeys.Add(key, inputKey);
                     return inputKey;
@@ -87,7 +82,7 @@ namespace VisualKeyboard
 
         #endregion
 
-        private Dictionary<Keys, InputKey> inputKeys = new Dictionary<Keys, InputKey>();
+        private static Dictionary<Keys, InputKey> inputKeys = new Dictionary<Keys, InputKey>();
         private List<List<Keys>> keyLayout = new List<List<Keys>>();
     }
 }

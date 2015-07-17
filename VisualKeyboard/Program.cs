@@ -66,7 +66,7 @@ namespace VisualKeyboard
             InitializeComponent();
         }
 
-        private void Form1_MouseDown(object sender, MouseEventArgs e)
+        private void MainWindowMouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
             {
@@ -135,7 +135,7 @@ namespace VisualKeyboard
             AutoScaleMode = AutoScaleMode.Font;
             FormBorderStyle = FormBorderStyle.None;
             TopMost = true;
-            MouseDown += new MouseEventHandler(Form1_MouseDown);
+            MouseDown += new MouseEventHandler(MainWindowMouseDown);
             AutoSize = true;
             ResumeLayout(false);
             PerformLayout();

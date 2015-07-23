@@ -3,6 +3,7 @@ using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
 
 namespace VisualKeyboard
 {
@@ -52,13 +53,13 @@ namespace VisualKeyboard
             if (code >= 0 && wParam == (IntPtr)WM_KEYDOWN)
             {
                 Keys keyId = (Keys)Marshal.ReadInt32(lParam);
-                if (inputKeys.ContainsKey(keyId))
-                {
-                    inputKeys[keyId].Flash();
-                }
                 if (keyId == Keys.Escape)
                 {
                     Application.Exit();
+                }
+                if (inputKeys.ContainsKey(keyId))
+                {
+                    inputKeys[keyId].Trigger();
                 }
             }
             return CallNextHookEx(hhook, code, (int)wParam, lParam);

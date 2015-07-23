@@ -2,14 +2,18 @@
 using System.Drawing;
 using System.Windows.Forms;
 using Color = System.Drawing.Color;
+using System.Reactive.Linq;
+using System.Reactive.Concurrency;
+using System.Reactive;
 
 namespace VisualKeyboard
 {
     class InputKey : TextBox
     {
+        private event EventHandler KeyEvent;
+
         public InputKey(Keys key)
         {
-            BackColor = Color.Yellow;
             BorderStyle = BorderStyle.None;
             Enabled = false;
             Dock = DockStyle.Left;
@@ -18,20 +22,24 @@ namespace VisualKeyboard
             ReadOnly = true;
             Size = new Size(30, 30);
             TextAlign = HorizontalAlignment.Center;
+
+            Observable.FromEventPattern(ev => KeyEvent += ev, ev => KeyEvent -= ev)
+                .Do(SetColor(Color.Red))
+                .Throttle(TimeSpan.FromMilliseconds(1000))
+                .Do(SetColor(Color.Yellow)).SubscribeOn(NewThreadScheduler.Default).Subscribe();
         }
 
-        internal void Flash()
+        private Action<EventPattern<object>> SetColor(Color color)
         {
-            BackColor = Color.Red;
-
-            var timer = new Timer();
-            timer.Tick += (s, e) =>
+            return (_) =>
             {
-                ((Timer)s).Stop();
-                BackColor = Color.Yellow;
+                BackColor = color;
             };
-            timer.Interval = 1000;
-            timer.Start();
+        }
+
+        public void Trigger()
+        {
+            KeyEvent(null, EventArgs.Empty);
         }
     }
 }

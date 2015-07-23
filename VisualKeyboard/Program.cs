@@ -56,6 +56,10 @@ namespace VisualKeyboard
                 {
                     inputKeys[keyId].Flash();
                 }
+                if (keyId == Keys.Escape)
+                {
+                    Application.Exit();
+                }
             }
             return CallNextHookEx(hhook, code, (int)wParam, lParam);
         }

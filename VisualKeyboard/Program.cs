@@ -80,18 +80,6 @@ namespace VisualKeyboard
             }
         }
 
-
-        private System.ComponentModel.IContainer components = null;
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing && (components != null))
-            {
-                components.Dispose();
-            }
-            base.Dispose(disposing);
-        }
-
         private Panel buildLayoutPanel(List<List<InputKey>> keyLayout)
         {
             FlowLayoutPanel columnPanel = new FlowLayoutPanel();

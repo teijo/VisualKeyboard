@@ -4,18 +4,13 @@ using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Reactive.Concurrency;
 
 namespace VisualKeyboard
 {
-    public partial class MainWindow : Form
+    public class KeyboardListener
     {
-        public const int WM_NCLBUTTONDOWN = 0xA1;
-        public const int HT_CAPTION = 0x2;
-
-        [DllImportAttribute("user32.dll")]
-        public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
-        [DllImportAttribute("user32.dll")]
-        public static extern bool ReleaseCapture();
+        public static event EventHandler<Keys> inputEvent;
 
         [DllImport("user32.dll")]
         static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc callback, IntPtr hInstance, uint threadId);
@@ -34,14 +29,9 @@ namespace VisualKeyboard
         const int WH_KEYBOARD_LL = 13;
         const int WM_KEYDOWN = 0x100;
 
-        private LowLevelKeyboardProc _proc = hookProc;
+        private static LowLevelKeyboardProc _proc = hookProc;
 
         private static IntPtr hhook = IntPtr.Zero;
-
-        public void SetHook()
-        {
-            hhook = SetWindowsHookEx(WH_KEYBOARD_LL, _proc, LoadLibrary("User32"), 0);
-        }
 
         public static void UnHook()
         {
@@ -53,22 +43,50 @@ namespace VisualKeyboard
             if (code >= 0 && wParam == (IntPtr)WM_KEYDOWN)
             {
                 Keys keyId = (Keys)Marshal.ReadInt32(lParam);
-                if (keyId == Keys.Escape)
-                {
-                    Application.Exit();
-                }
-                if (inputKeys.ContainsKey(keyId))
-                {
-                    inputKeys[keyId].Trigger();
-                }
+                KeyboardListener.inputEvent(null, keyId);
             }
             return CallNextHookEx(hhook, code, (int)wParam, lParam);
         }
 
+        static KeyboardListener()
+        {
+            hhook = SetWindowsHookEx(WH_KEYBOARD_LL, _proc, LoadLibrary("User32"), 0);
+        }
+    }
+
+    public partial class MainWindow : Form
+    {
+        public const int WM_NCLBUTTONDOWN = 0xA1;
+        public const int HT_CAPTION = 0x2;
+
+        [DllImportAttribute("user32.dll")]
+        public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+        [DllImportAttribute("user32.dll")]
+        public static extern bool ReleaseCapture();
+
         public MainWindow()
         {
-            SetHook();
+            unsubscribe = Observable.FromEventPattern<Keys>(ev => KeyboardListener.inputEvent += ev, ev => KeyboardListener.inputEvent -= ev)
+                .Select(ev => ev.EventArgs)
+                .Do(key =>
+                {
+                    if (key == Keys.Escape)
+                    {
+                        Application.Exit();
+                    }
+                    if (inputKeys.ContainsKey(key))
+                    {
+                        inputKeys[key].Trigger();
+                    }
+                })
+                .SubscribeOn(NewThreadScheduler.Default).Subscribe();
             InitializeComponent();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            unsubscribe.Dispose();
+            base.Dispose(disposing);
         }
 
         private void MainWindowMouseDown(object sender, MouseEventArgs e)
@@ -136,6 +154,7 @@ namespace VisualKeyboard
 
         private static Dictionary<Keys, InputKey> inputKeys = new Dictionary<Keys, InputKey>();
         private List<List<Keys>> keyLayout = new List<List<Keys>>();
+        private IDisposable unsubscribe;
     }
 
     static class Program

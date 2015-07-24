@@ -50,8 +50,7 @@ namespace VisualKeyboard
         }
     }
 
-
-    public partial class MainWindow : Form
+    public static class MouseInput
     {
         public const int WM_NCLBUTTONDOWN = 0xA1;
         public const int HT_CAPTION = 0x2;
@@ -61,6 +60,24 @@ namespace VisualKeyboard
         [DllImportAttribute("user32.dll")]
         public static extern bool ReleaseCapture();
 
+        public delegate void EventHandler(object sender, MouseEventArgs e);
+
+        public static EventHandler DragWindowFor(IntPtr handle)
+        {
+            return (object sender, MouseEventArgs e) =>
+            {
+                if (e.Button == MouseButtons.Left)
+                {
+                    ReleaseCapture();
+                    SendMessage(handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+                }
+            };
+        }
+
+    }
+
+    public partial class MainWindow : Form
+    {
         public MainWindow()
         {
             unsubscribe = Observable.FromEventPattern<Keys>(ev => KeyboardListener.inputEvent += ev, ev => KeyboardListener.inputEvent -= ev)
@@ -85,15 +102,6 @@ namespace VisualKeyboard
             unsubscribe.Dispose();
             KeyboardListener.UnHook();
             base.Dispose(disposing);
-        }
-
-        private void MainWindowMouseDown(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                ReleaseCapture();
-                SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
-            }
         }
 
         private static Panel buildLayoutPanel(List<List<InputKey>> keyLayout)
@@ -144,7 +152,7 @@ namespace VisualKeyboard
             AutoScaleMode = AutoScaleMode.Font;
             FormBorderStyle = FormBorderStyle.None;
             TopMost = true;
-            MouseDown += new MouseEventHandler(MainWindowMouseDown);
+            MouseDown += new MouseEventHandler(MouseInput.DragWindowFor(Handle));
             AutoSize = true;
             ResumeLayout(false);
             PerformLayout();

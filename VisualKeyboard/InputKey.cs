@@ -10,6 +10,7 @@ namespace VisualKeyboard
 {
     class InputKey : TextBox
     {
+        private IDisposable unsubscribe;
         private event EventHandler KeyEvent;
 
         public InputKey(Keys key)
@@ -23,11 +24,18 @@ namespace VisualKeyboard
             Size = new Size(30, 30);
             TextAlign = HorizontalAlignment.Center;
 
-            Observable.FromEventPattern(ev => KeyEvent += ev, ev => KeyEvent -= ev)
+            unsubscribe = Observable.FromEventPattern(ev => KeyEvent += ev, ev => KeyEvent -= ev)
                 .Do(SetColor(Color.Red))
                 .Throttle(TimeSpan.FromMilliseconds(1000))
                 .Do(SetColor(Color.Yellow)).SubscribeOn(NewThreadScheduler.Default).Subscribe();
         }
+
+        protected override void Dispose(bool disposing)
+        {
+            unsubscribe.Dispose();
+            base.Dispose(disposing);
+        }
+
 
         private Action<EventPattern<object>> SetColor(Color color)
         {

@@ -12,47 +12,44 @@ namespace VisualKeyboard
     {
         public static event EventHandler<Keys> inputEvent;
 
+        private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
+        private static LowLevelKeyboardProc _proc = hookProc;
+        private static IntPtr hhook = IntPtr.Zero;
+
         [DllImport("user32.dll")]
-        static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc callback, IntPtr hInstance, uint threadId);
+        static extern IntPtr CallNextHookEx(IntPtr idHook, int nCode, int wParam, IntPtr lParam);
 
         [DllImport("user32.dll")]
         static extern bool UnhookWindowsHookEx(IntPtr hInstance);
 
         [DllImport("user32.dll")]
-        static extern IntPtr CallNextHookEx(IntPtr idHook, int nCode, int wParam, IntPtr lParam);
+        static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc callback, IntPtr hInstance, uint threadId);
 
         [DllImport("kernel32.dll")]
         static extern IntPtr LoadLibrary(string lpFileName);
 
-        private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
-
-        const int WH_KEYBOARD_LL = 13;
-        const int WM_KEYDOWN = 0x100;
-
-        private static LowLevelKeyboardProc _proc = hookProc;
-
-        private static IntPtr hhook = IntPtr.Zero;
+        public static IntPtr hookProc(int code, IntPtr wParam, IntPtr lParam)
+        {
+            const int WM_KEYDOWN = 0x100;
+            if (code >= 0 && wParam == (IntPtr)WM_KEYDOWN)
+            {
+                KeyboardListener.inputEvent(null, (Keys)Marshal.ReadInt32(lParam));
+            }
+            return CallNextHookEx(hhook, code, (int)wParam, lParam);
+        }
 
         public static void UnHook()
         {
             UnhookWindowsHookEx(hhook);
         }
 
-        public static IntPtr hookProc(int code, IntPtr wParam, IntPtr lParam)
-        {
-            if (code >= 0 && wParam == (IntPtr)WM_KEYDOWN)
-            {
-                Keys keyId = (Keys)Marshal.ReadInt32(lParam);
-                KeyboardListener.inputEvent(null, keyId);
-            }
-            return CallNextHookEx(hhook, code, (int)wParam, lParam);
-        }
-
         static KeyboardListener()
         {
+            const int WH_KEYBOARD_LL = 13;
             hhook = SetWindowsHookEx(WH_KEYBOARD_LL, _proc, LoadLibrary("User32"), 0);
         }
     }
+
 
     public partial class MainWindow : Form
     {

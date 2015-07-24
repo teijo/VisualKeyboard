@@ -28,7 +28,7 @@ namespace VisualKeyboard
         [DllImport("kernel32.dll")]
         static extern IntPtr LoadLibrary(string lpFileName);
 
-        public static IntPtr hookProc(int code, IntPtr wParam, IntPtr lParam)
+        private static IntPtr hookProc(int code, IntPtr wParam, IntPtr lParam)
         {
             const int WM_KEYDOWN = 0x100;
             if (code >= 0 && wParam == (IntPtr)WM_KEYDOWN)

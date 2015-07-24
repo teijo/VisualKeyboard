@@ -83,6 +83,7 @@ namespace VisualKeyboard
         protected override void Dispose(bool disposing)
         {
             unsubscribe.Dispose();
+            KeyboardListener.UnHook();
             base.Dispose(disposing);
         }
 

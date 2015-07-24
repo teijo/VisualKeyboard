@@ -96,7 +96,7 @@ namespace VisualKeyboard
             }
         }
 
-        private Panel buildLayoutPanel(List<List<InputKey>> keyLayout)
+        private static Panel buildLayoutPanel(List<List<InputKey>> keyLayout)
         {
             FlowLayoutPanel columnPanel = new FlowLayoutPanel();
             columnPanel.FlowDirection = FlowDirection.TopDown;

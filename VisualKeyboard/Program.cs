@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Concurrency;
+using System.Diagnostics;
+using VisualKeyboard.Properties;
 
 namespace VisualKeyboard
 {
@@ -128,15 +130,23 @@ namespace VisualKeyboard
             return columnPanel;
         }
 
+        private static List<List<Keys>> ParseKeyConfig(string configString)
+        {
+            List<string> keyRows = configString.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None).ToList();
+            List<List<Keys>> keyConfig = new List<List<Keys>>();
+            foreach (string row in keyRows)
+            {
+                List<Keys> keys = row.Split(' ').ToList().Select(k => (Keys)Enum.Parse(typeof(Keys), k.ToUpper())).ToList();
+                keyConfig.Add(keys);
+            }
+            return keyConfig;
+        }
+
         private void InitializeComponent()
         {
-            List<List<Keys>> keyConfig = new List<List<Keys>> {
-                new List<Keys> { Keys.Q, Keys.W, Keys.E, Keys.R, Keys.T, Keys.Y, Keys.U, Keys.I, Keys.O, Keys.P },
-                new List<Keys> { Keys.A, Keys.S, Keys.D, Keys.F, Keys.G, Keys.H, Keys.J, Keys.K, Keys.L },
-                new List<Keys> { Keys.Z, Keys.X, Keys.C, Keys.V, Keys.B, Keys.N, Keys.M }
-            };
+            string layoutConfig = System.Text.Encoding.Default.GetString(Resources.DefaultLayout);
 
-            List<List<InputKey>> layout = keyConfig.Select(row =>
+            List<List<InputKey>> layout = ParseKeyConfig(layoutConfig).Select(row =>
             {
                 return row.Select(key =>
                 {

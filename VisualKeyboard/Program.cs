@@ -106,13 +106,13 @@ namespace VisualKeyboard
             base.Dispose(disposing);
         }
 
-        private static Panel buildLayoutPanel(List<List<InputKey>> keyLayout)
+        private static Panel buildLayoutPanel(IEnumerable<IEnumerable<InputKey>> keyLayout)
         {
             FlowLayoutPanel columnPanel = new FlowLayoutPanel();
             columnPanel.FlowDirection = FlowDirection.TopDown;
             columnPanel.SuspendLayout();
             columnPanel.AutoSize = true;
-            foreach (List<InputKey> row in keyLayout)
+            foreach (IEnumerable<InputKey> row in keyLayout)
             {
                 FlowLayoutPanel rowPanel = new FlowLayoutPanel();
                 rowPanel.FlowDirection = FlowDirection.LeftToRight;
@@ -130,31 +130,31 @@ namespace VisualKeyboard
             return columnPanel;
         }
 
-        private static List<List<Keys>> ParseKeyConfig(string configString)
+        private static Keys ParseKey(string key)
         {
-            List<string> keyRows = configString.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None).ToList();
-            List<List<Keys>> keyConfig = new List<List<Keys>>();
-            foreach (string row in keyRows)
-            {
-                List<Keys> keys = row.Split(' ').ToList().Select(k => (Keys)Enum.Parse(typeof(Keys), k.ToUpper())).ToList();
-                keyConfig.Add(keys);
-            }
-            return keyConfig;
+            return (Keys)Enum.Parse(typeof(Keys), key.ToUpper());
+        }
+
+        private static IEnumerable<IEnumerable<Keys>> ParseKeyConfig(string configString)
+        {
+            return configString
+                .Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None)
+                .Select(row => row.Split(' ').Select(ParseKey));
         }
 
         private void InitializeComponent()
         {
             string layoutConfig = System.Text.Encoding.Default.GetString(Resources.DefaultLayout);
 
-            List<List<InputKey>> layout = ParseKeyConfig(layoutConfig).Select(row =>
+            IEnumerable<IEnumerable<InputKey>> layout = ParseKeyConfig(layoutConfig).Select(row =>
             {
                 return row.Select(key =>
                 {
                     InputKey inputKey = new InputKey(key);
                     inputKeys.Add(key, inputKey);
                     return inputKey;
-                }).ToList();
-            }).ToList();
+                });
+            });
 
             Controls.Add(buildLayoutPanel(layout));
             SuspendLayout();

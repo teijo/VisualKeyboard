@@ -81,7 +81,6 @@ namespace VisualKeyboard
     public partial class MainWindow : Form
     {
         private Dictionary<Keys, InputKey> keyLookup;
-        private List<List<Keys>> keyLayout = new List<List<Keys>>();
         private IDisposable unsubscribe;
 
         public MainWindow()

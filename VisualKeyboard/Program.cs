@@ -145,7 +145,7 @@ class KeyGrid : FlowLayoutPanel
             {
                 FlowLayoutPanel rowPanel = new FlowLayoutPanel();
                 rowPanel.FlowDirection = FlowDirection.LeftToRight;
-                rowPanel.BackColor = System.Drawing.Color.Pink;
+                rowPanel.BackColor = Color.Pink;
                 rowPanel.SuspendLayout();
                 rowPanel.AutoSize = true;
                 rowPanel.Controls.AddRange(row);

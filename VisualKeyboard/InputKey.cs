@@ -8,7 +8,7 @@ using System.Reactive;
 
 namespace VisualKeyboard
 {
-    class InputKey : TextBox
+    public class InputKey : TextBox
     {
         public readonly Keys Key;
         private IDisposable unsubscribe;

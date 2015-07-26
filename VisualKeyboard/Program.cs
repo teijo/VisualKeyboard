@@ -78,21 +78,38 @@ namespace VisualKeyboard
 
     }
 
-    public partial class MainWindow : Form
+    public class KeyGrid : FlowLayoutPanel
     {
         private readonly IDisposable unsubscribe;
 
-        public MainWindow(IEnumerable<IEnumerable<Keys>> layoutConfig)
+        public KeyGrid(IEnumerable<IEnumerable<Keys>> layoutConfig)
         {
-            IEnumerable<IEnumerable<InputKey>> layout = layoutConfig
+            IEnumerable<IEnumerable<InputKey>> keyLayout = layoutConfig
                 .Select(row => row.Select(key => new InputKey(key)).ToList())
                 .ToList();
 
-            Dictionary<Keys, InputKey> keyLookup = layout
+            Dictionary<Keys, InputKey> keyLookup = keyLayout
                 .SelectMany(row => row.Select(inputKey => new { inputKey.Key, inputKey }))
                 .ToDictionary(entry => entry.Key, entry => entry.inputKey);
 
-            InitializeComponent(layout);
+            FlowDirection = FlowDirection.TopDown;
+            SuspendLayout();
+            AutoSize = true;
+            foreach (IEnumerable<InputKey> row in keyLayout)
+            {
+                FlowLayoutPanel rowPanel = new FlowLayoutPanel();
+                rowPanel.FlowDirection = FlowDirection.LeftToRight;
+                rowPanel.BackColor = System.Drawing.Color.Pink;
+                rowPanel.SuspendLayout();
+                rowPanel.AutoSize = true;
+                foreach (InputKey input in row)
+                {
+                    rowPanel.Controls.Add(input);
+                }
+                rowPanel.ResumeLayout();
+                Controls.Add(rowPanel);
+            }
+            ResumeLayout();
 
             unsubscribe = Observable.FromEventPattern<Keys>(ev => KeyboardListener.inputEvent += ev, ev => KeyboardListener.inputEvent -= ev)
                 .Select(ev => ev.EventArgs)
@@ -116,34 +133,13 @@ namespace VisualKeyboard
             KeyboardListener.UnHook();
             base.Dispose(disposing);
         }
+    }
 
-        private static Panel buildLayoutPanel(IEnumerable<IEnumerable<InputKey>> keyLayout)
+    public partial class MainWindow : Form
+    {
+        public MainWindow(IEnumerable<IEnumerable<Keys>> layoutConfig)
         {
-            FlowLayoutPanel columnPanel = new FlowLayoutPanel();
-            columnPanel.FlowDirection = FlowDirection.TopDown;
-            columnPanel.SuspendLayout();
-            columnPanel.AutoSize = true;
-            foreach (IEnumerable<InputKey> row in keyLayout)
-            {
-                FlowLayoutPanel rowPanel = new FlowLayoutPanel();
-                rowPanel.FlowDirection = FlowDirection.LeftToRight;
-                rowPanel.BackColor = System.Drawing.Color.Pink;
-                rowPanel.SuspendLayout();
-                rowPanel.AutoSize = true;
-                foreach (InputKey input in row)
-                {
-                    rowPanel.Controls.Add(input);
-                }
-                rowPanel.ResumeLayout();
-                columnPanel.Controls.Add(rowPanel);
-            }
-            columnPanel.ResumeLayout();
-            return columnPanel;
-        }
-
-        private void InitializeComponent(IEnumerable<IEnumerable<InputKey>> layout)
-        {
-            Controls.Add(buildLayoutPanel(layout));
+            Controls.Add(new KeyGrid(layoutConfig));
             SuspendLayout();
 
             AutoScaleMode = AutoScaleMode.Font;

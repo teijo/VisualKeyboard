@@ -181,6 +181,22 @@ class KeyGrid : FlowLayoutPanel
             .Subscribe();
     }
 
+    // Initial passthrough for dragging: http://stackoverflow.com/a/8635626
+    protected override void WndProc(ref Message m)
+    {
+        const int WM_NCHITTEST = 0x0084;
+        const int HTTRANSPARENT = (-1);
+
+        if (m.Msg == WM_NCHITTEST)
+        {
+            m.Result = (IntPtr)HTTRANSPARENT;
+        }
+        else
+        {
+            base.WndProc(ref m);
+        }
+    }
+
     protected override void Dispose(bool disposing)
     {
         Unsubscribe.Dispose();

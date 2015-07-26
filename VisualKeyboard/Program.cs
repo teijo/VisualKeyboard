@@ -86,7 +86,7 @@ static class MouseInput
     }
 }
 
-class InputKey : TextBox
+class InputKey : Label
 {
     public readonly Keys Key;
     private readonly IDisposable Unsubscribe;
@@ -100,9 +100,8 @@ class InputKey : TextBox
         Dock = DockStyle.Left;
         MinimumSize = new Size(30, 30);
         Text = Enum.GetName(keyCode.GetType(), keyCode);
-        ReadOnly = true;
         Size = new Size(30, 30);
-        TextAlign = HorizontalAlignment.Center;
+        TextAlign = ContentAlignment.MiddleCenter;
 
         Unsubscribe = Observable.FromEventPattern(ev => KeyEvent += ev, ev => KeyEvent -= ev)
             .Do(SetColor(Color.Red))

@@ -82,6 +82,7 @@ namespace VisualKeyboard
     {
         public MainWindow()
         {
+            InitializeComponent();
             unsubscribe = Observable.FromEventPattern<Keys>(ev => KeyboardListener.inputEvent += ev, ev => KeyboardListener.inputEvent -= ev)
                 .Select(ev => ev.EventArgs)
                 .Do(key =>
@@ -90,13 +91,12 @@ namespace VisualKeyboard
                     {
                         Application.Exit();
                     }
-                    if (inputKeys.ContainsKey(key))
+                    if (keyLookup.ContainsKey(key))
                     {
-                        inputKeys[key].Trigger();
+                        keyLookup[key].Trigger();
                     }
                 })
                 .SubscribeOn(NewThreadScheduler.Default).Subscribe();
-            InitializeComponent();
         }
 
         protected override void Dispose(bool disposing)
@@ -146,15 +146,13 @@ namespace VisualKeyboard
         {
             string layoutConfig = System.Text.Encoding.Default.GetString(Resources.DefaultLayout);
 
-            IEnumerable<IEnumerable<InputKey>> layout = ParseKeyConfig(layoutConfig).Select(row =>
-            {
-                return row.Select(key =>
-                {
-                    InputKey inputKey = new InputKey(key);
-                    inputKeys.Add(key, inputKey);
-                    return inputKey;
-                });
-            });
+            IEnumerable<IEnumerable<InputKey>> layout = ParseKeyConfig(layoutConfig)
+                .Select(row => row.Select(key => new InputKey(key)).ToList())
+                .ToList();
+
+            keyLookup = layout
+                .SelectMany(row => row.Select(inputKey => new { inputKey.Key, inputKey }))
+                .ToDictionary(x => x.Key, x => x.inputKey);
 
             Controls.Add(buildLayoutPanel(layout));
             SuspendLayout();
@@ -168,7 +166,7 @@ namespace VisualKeyboard
             PerformLayout();
         }
 
-        private static Dictionary<Keys, InputKey> inputKeys = new Dictionary<Keys, InputKey>();
+        private Dictionary<Keys, InputKey> keyLookup;
         private List<List<Keys>> keyLayout = new List<List<Keys>>();
         private IDisposable unsubscribe;
     }

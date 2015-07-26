@@ -1,13 +1,13 @@
-﻿using System;
-using System.Windows.Forms;
-using System.Runtime.InteropServices;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reactive.Linq;
-using VisualKeyboard.Properties;
 using System.Drawing;
-using Color = System.Drawing.Color;
+using System.Linq;
 using System.Reactive;
+using System.Reactive.Linq;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
+using VisualKeyboard.Properties;
+using Color = System.Drawing.Color;
 
 static class KeyboardListener
 {

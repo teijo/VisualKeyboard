@@ -51,7 +51,12 @@ static class KeyboardListener
 
     public static void UnHook()
     {
+        if (HHook == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("Trying to UnHook keyboard listener second time");
+        }
         NativeMethods.UnhookWindowsHookEx(HHook);
+        HHook = IntPtr.Zero;
     }
 
     static KeyboardListener()
@@ -179,7 +184,6 @@ class KeyGrid : FlowLayoutPanel
     protected override void Dispose(bool disposing)
     {
         Unsubscribe.Dispose();
-        KeyboardListener.UnHook();
         base.Dispose(disposing);
     }
 }
@@ -223,5 +227,6 @@ static class Program
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         Application.Run(new MainWindow(ParseKeyConfig(layoutConfig)));
+        KeyboardListener.UnHook();
     }
 }

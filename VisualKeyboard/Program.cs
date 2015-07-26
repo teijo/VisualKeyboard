@@ -107,7 +107,7 @@ namespace VisualKeyboard
                         keyLookup[key].Trigger();
                     }
                 })
-                .SubscribeOn(NewThreadScheduler.Default).Subscribe();
+                .Subscribe();
         }
 
         protected override void Dispose(bool disposing)

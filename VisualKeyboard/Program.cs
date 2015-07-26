@@ -141,8 +141,8 @@ class KeyGrid : FlowLayoutPanel
             .ToList();
 
         FlowDirection = FlowDirection.TopDown;
-        SuspendLayout();
         AutoSize = true;
+        BackColor = Color.Blue;
 
         Controls.AddRange(keyLayout
             .Select(Enumerable.ToArray)
@@ -158,8 +158,6 @@ class KeyGrid : FlowLayoutPanel
                 return rowPanel;
             })
             .ToArray());
-
-        ResumeLayout();
 
         Dictionary<Keys, InputKey> keyLookup = keyLayout
             .SelectMany(row => row.Select(inputKey => new { inputKey.Key, inputKey }))
@@ -208,16 +206,13 @@ class MainWindow : Form
 {
     public MainWindow(IEnumerable<IEnumerable<Keys>> layoutConfig)
     {
-        Controls.Add(new KeyGrid(layoutConfig));
-        SuspendLayout();
-
-        AutoScaleMode = AutoScaleMode.Font;
+        var keyGrid = new KeyGrid(layoutConfig);
+        Controls.Add(keyGrid);
         FormBorderStyle = FormBorderStyle.None;
+        Height = keyGrid.Height;
         TopMost = true;
-        MouseDown += new MouseEventHandler(MouseInput.DragWindowFor(Handle));
         AutoSize = true;
-        ResumeLayout(false);
-        PerformLayout();
+        MouseDown += new MouseEventHandler(MouseInput.DragWindowFor(Handle));
     }
 }
 

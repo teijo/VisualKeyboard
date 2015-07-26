@@ -94,14 +94,16 @@ class InputKey : Label
 
     public InputKey(Keys keyCode)
     {
+        const int edge = 40;
         Key = keyCode;
         BorderStyle = BorderStyle.None;
         Enabled = false;
         Dock = DockStyle.Left;
-        MinimumSize = new Size(30, 30);
+        MinimumSize = new Size(edge, edge);
         Text = Enum.GetName(keyCode.GetType(), keyCode);
-        Size = new Size(30, 30);
+        Size = new Size(edge, edge);
         TextAlign = ContentAlignment.MiddleCenter;
+        Margin = new Padding(4);
 
         Unsubscribe = Observable.FromEventPattern(ev => KeyEvent += ev, ev => KeyEvent -= ev)
             .Do(SetColor(Color.Red))
@@ -154,6 +156,7 @@ class KeyGrid : FlowLayoutPanel
                 rowPanel.AutoSize = true;
                 rowPanel.Controls.AddRange(row);
                 rowPanel.ResumeLayout();
+                rowPanel.Margin = new Padding(0);
                 return rowPanel;
             })
             .ToArray());

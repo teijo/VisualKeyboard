@@ -3,7 +3,6 @@ using System.Drawing;
 using System.Windows.Forms;
 using Color = System.Drawing.Color;
 using System.Reactive.Linq;
-using System.Reactive.Concurrency;
 using System.Reactive;
 
 namespace VisualKeyboard

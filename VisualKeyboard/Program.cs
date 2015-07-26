@@ -80,12 +80,20 @@ namespace VisualKeyboard
 
     public partial class MainWindow : Form
     {
-        private Dictionary<Keys, InputKey> keyLookup;
-        private IDisposable unsubscribe;
+        private readonly IDisposable unsubscribe;
 
-        public MainWindow()
+        public MainWindow(IEnumerable<IEnumerable<Keys>> layoutConfig)
         {
-            InitializeComponent();
+            IEnumerable<IEnumerable<InputKey>> layout = layoutConfig
+                .Select(row => row.Select(key => new InputKey(key)).ToList())
+                .ToList();
+
+            Dictionary<Keys, InputKey> keyLookup = layout
+                .SelectMany(row => row.Select(inputKey => new { inputKey.Key, inputKey }))
+                .ToDictionary(entry => entry.Key, entry => entry.inputKey);
+
+            InitializeComponent(layout);
+
             unsubscribe = Observable.FromEventPattern<Keys>(ev => KeyboardListener.inputEvent += ev, ev => KeyboardListener.inputEvent -= ev)
                 .Select(ev => ev.EventArgs)
                 .Do(key =>
@@ -133,30 +141,8 @@ namespace VisualKeyboard
             return columnPanel;
         }
 
-        private static Keys ParseKey(string key)
+        private void InitializeComponent(IEnumerable<IEnumerable<InputKey>> layout)
         {
-            return (Keys)Enum.Parse(typeof(Keys), key.ToUpper());
-        }
-
-        private static IEnumerable<IEnumerable<Keys>> ParseKeyConfig(string configString)
-        {
-            return configString
-                .Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None)
-                .Select(row => row.Split(' ').Select(ParseKey));
-        }
-
-        private void InitializeComponent()
-        {
-            string layoutConfig = System.Text.Encoding.Default.GetString(Resources.DefaultLayout);
-
-            IEnumerable<IEnumerable<InputKey>> layout = ParseKeyConfig(layoutConfig)
-                .Select(row => row.Select(key => new InputKey(key)).ToList())
-                .ToList();
-
-            keyLookup = layout
-                .SelectMany(row => row.Select(inputKey => new { inputKey.Key, inputKey }))
-                .ToDictionary(entry => entry.Key, entry => entry.inputKey);
-
             Controls.Add(buildLayoutPanel(layout));
             SuspendLayout();
 
@@ -172,12 +158,26 @@ namespace VisualKeyboard
 
     static class Program
     {
+        private static Keys ParseKey(string key)
+        {
+            return (Keys)Enum.Parse(typeof(Keys), key.ToUpper());
+        }
+
+        private static IEnumerable<IEnumerable<Keys>> ParseKeyConfig(string configString)
+        {
+            return configString
+                .Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None)
+                .Select(row => row.Split(' ').Select(ParseKey));
+        }
+
         [STAThread]
         static void Main()
         {
+            string layoutConfig = System.Text.Encoding.Default.GetString(Resources.DefaultLayout);
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainWindow());
+            Application.Run(new MainWindow(ParseKeyConfig(layoutConfig)));
         }
     }
 }

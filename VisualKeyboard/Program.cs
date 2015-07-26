@@ -152,7 +152,7 @@ namespace VisualKeyboard
 
             keyLookup = layout
                 .SelectMany(row => row.Select(inputKey => new { inputKey.Key, inputKey }))
-                .ToDictionary(x => x.Key, x => x.inputKey);
+                .ToDictionary(entry => entry.Key, entry => entry.inputKey);
 
             Controls.Add(buildLayoutPanel(layout));
             SuspendLayout();

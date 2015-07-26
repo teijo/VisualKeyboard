@@ -53,10 +53,10 @@ static class KeyboardListener
 
 static class MouseInput
 {
-    [DllImportAttribute("user32.dll")]
+    [DllImport("user32.dll")]
     public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
 
-    [DllImportAttribute("user32.dll")]
+    [DllImport("user32.dll")]
     public static extern bool ReleaseCapture();
 
     public delegate void EventHandler(object sender, MouseEventArgs e);

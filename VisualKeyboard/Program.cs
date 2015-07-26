@@ -95,20 +95,22 @@ namespace VisualKeyboard
             FlowDirection = FlowDirection.TopDown;
             SuspendLayout();
             AutoSize = true;
-            foreach (IEnumerable<InputKey> row in keyLayout)
-            {
-                FlowLayoutPanel rowPanel = new FlowLayoutPanel();
-                rowPanel.FlowDirection = FlowDirection.LeftToRight;
-                rowPanel.BackColor = System.Drawing.Color.Pink;
-                rowPanel.SuspendLayout();
-                rowPanel.AutoSize = true;
-                foreach (InputKey input in row)
+
+            Controls.AddRange(keyLayout
+                .Select(Enumerable.ToArray)
+                .Select(row =>
                 {
-                    rowPanel.Controls.Add(input);
-                }
-                rowPanel.ResumeLayout();
-                Controls.Add(rowPanel);
-            }
+                    FlowLayoutPanel rowPanel = new FlowLayoutPanel();
+                    rowPanel.FlowDirection = FlowDirection.LeftToRight;
+                    rowPanel.BackColor = System.Drawing.Color.Pink;
+                    rowPanel.SuspendLayout();
+                    rowPanel.AutoSize = true;
+                    rowPanel.Controls.AddRange(row);
+                    rowPanel.ResumeLayout();
+                    return rowPanel;
+                })
+                .ToArray());
+
             ResumeLayout();
 
             unsubscribe = Observable.FromEventPattern<Keys>(ev => KeyboardListener.inputEvent += ev, ev => KeyboardListener.inputEvent -= ev)

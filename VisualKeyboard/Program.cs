@@ -88,10 +88,6 @@ namespace VisualKeyboard
                 .Select(row => row.Select(key => new InputKey(key)).ToList())
                 .ToList();
 
-            Dictionary<Keys, InputKey> keyLookup = keyLayout
-                .SelectMany(row => row.Select(inputKey => new { inputKey.Key, inputKey }))
-                .ToDictionary(entry => entry.Key, entry => entry.inputKey);
-
             FlowDirection = FlowDirection.TopDown;
             SuspendLayout();
             AutoSize = true;
@@ -112,6 +108,10 @@ namespace VisualKeyboard
                 .ToArray());
 
             ResumeLayout();
+
+            Dictionary<Keys, InputKey> keyLookup = keyLayout
+                .SelectMany(row => row.Select(inputKey => new { inputKey.Key, inputKey }))
+                .ToDictionary(entry => entry.Key, entry => entry.inputKey);
 
             unsubscribe = Observable.FromEventPattern<Keys>(ev => KeyboardListener.inputEvent += ev, ev => KeyboardListener.inputEvent -= ev)
                 .Select(ev => ev.EventArgs)

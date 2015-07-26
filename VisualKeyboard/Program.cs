@@ -10,11 +10,11 @@ namespace VisualKeyboard
 {
     public class KeyboardListener
     {
-        public static event EventHandler<Keys> inputEvent;
+        public static event EventHandler<Keys> InputEvent;
 
         private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
-        private static LowLevelKeyboardProc _proc = hookProc;
-        private static IntPtr hhook = IntPtr.Zero;
+        private static LowLevelKeyboardProc Proc = HookProc;
+        private static IntPtr HHook = IntPtr.Zero;
 
         [DllImport("user32.dll")]
         static extern IntPtr CallNextHookEx(IntPtr idHook, int nCode, int wParam, IntPtr lParam);
@@ -28,35 +28,33 @@ namespace VisualKeyboard
         [DllImport("kernel32.dll")]
         static extern IntPtr LoadLibrary(string lpFileName);
 
-        private static IntPtr hookProc(int code, IntPtr wParam, IntPtr lParam)
+        private static IntPtr HookProc(int code, IntPtr wParam, IntPtr lParam)
         {
             const int WM_KEYDOWN = 0x100;
             if (code >= 0 && wParam == (IntPtr)WM_KEYDOWN)
             {
-                KeyboardListener.inputEvent(null, (Keys)Marshal.ReadInt32(lParam));
+                InputEvent(null, (Keys)Marshal.ReadInt32(lParam));
             }
-            return CallNextHookEx(hhook, code, (int)wParam, lParam);
+            return CallNextHookEx(HHook, code, (int)wParam, lParam);
         }
 
         public static void UnHook()
         {
-            UnhookWindowsHookEx(hhook);
+            UnhookWindowsHookEx(HHook);
         }
 
         static KeyboardListener()
         {
             const int WH_KEYBOARD_LL = 13;
-            hhook = SetWindowsHookEx(WH_KEYBOARD_LL, _proc, LoadLibrary("User32"), 0);
+            HHook = SetWindowsHookEx(WH_KEYBOARD_LL, Proc, LoadLibrary("User32"), 0);
         }
     }
 
     public static class MouseInput
     {
-        public const int WM_NCLBUTTONDOWN = 0xA1;
-        public const int HT_CAPTION = 0x2;
-
         [DllImportAttribute("user32.dll")]
         public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+
         [DllImportAttribute("user32.dll")]
         public static extern bool ReleaseCapture();
 
@@ -64,6 +62,9 @@ namespace VisualKeyboard
 
         public static EventHandler DragWindowFor(IntPtr handle)
         {
+            const int WM_NCLBUTTONDOWN = 0xA1;
+            const int HT_CAPTION = 0x2;
+
             return (object sender, MouseEventArgs e) =>
             {
                 if (e.Button == MouseButtons.Left)
@@ -78,7 +79,7 @@ namespace VisualKeyboard
 
     public class KeyGrid : FlowLayoutPanel
     {
-        private readonly IDisposable unsubscribe;
+        private readonly IDisposable Unsubscribe;
 
         public KeyGrid(IEnumerable<IEnumerable<Keys>> layoutConfig)
         {
@@ -111,7 +112,7 @@ namespace VisualKeyboard
                 .SelectMany(row => row.Select(inputKey => new { inputKey.Key, inputKey }))
                 .ToDictionary(entry => entry.Key, entry => entry.inputKey);
 
-            unsubscribe = Observable.FromEventPattern<Keys>(ev => KeyboardListener.inputEvent += ev, ev => KeyboardListener.inputEvent -= ev)
+            Unsubscribe = Observable.FromEventPattern<Keys>(ev => KeyboardListener.InputEvent += ev, ev => KeyboardListener.InputEvent -= ev)
                 .Select(ev => ev.EventArgs)
                 .Do(key =>
                 {
@@ -129,7 +130,7 @@ namespace VisualKeyboard
 
         protected override void Dispose(bool disposing)
         {
-            unsubscribe.Dispose();
+            Unsubscribe.Dispose();
             KeyboardListener.UnHook();
             base.Dispose(disposing);
         }

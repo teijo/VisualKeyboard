@@ -10,22 +10,22 @@ namespace VisualKeyboard
     public class InputKey : TextBox
     {
         public readonly Keys Key;
-        private IDisposable unsubscribe;
+        private readonly IDisposable Unsubscribe;
         private event EventHandler KeyEvent;
 
-        public InputKey(Keys key)
+        public InputKey(Keys keyCode)
         {
-            this.Key = key;
+            Key = keyCode;
             BorderStyle = BorderStyle.None;
             Enabled = false;
             Dock = DockStyle.Left;
             MinimumSize = new Size(30, 30);
-            Text = Enum.GetName(key.GetType(), key);
+            Text = Enum.GetName(keyCode.GetType(), keyCode);
             ReadOnly = true;
             Size = new Size(30, 30);
             TextAlign = HorizontalAlignment.Center;
 
-            unsubscribe = Observable.FromEventPattern(ev => KeyEvent += ev, ev => KeyEvent -= ev)
+            Unsubscribe = Observable.FromEventPattern(ev => KeyEvent += ev, ev => KeyEvent -= ev)
                 .Do(SetColor(Color.Red))
                 .Throttle(TimeSpan.FromMilliseconds(1000))
                 .Do(SetColor(Color.Yellow)).Subscribe();
@@ -33,7 +33,7 @@ namespace VisualKeyboard
 
         protected override void Dispose(bool disposing)
         {
-            unsubscribe.Dispose();
+            Unsubscribe.Dispose();
             base.Dispose(disposing);
         }
 

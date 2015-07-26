@@ -9,7 +9,7 @@ using System.Drawing;
 using Color = System.Drawing.Color;
 using System.Reactive;
 
-public class KeyboardListener
+static class KeyboardListener
 {
     public static event EventHandler<Keys> InputEvent;
 
@@ -51,7 +51,7 @@ public class KeyboardListener
     }
 }
 
-public static class MouseInput
+static class MouseInput
 {
     [DllImportAttribute("user32.dll")]
     public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
@@ -77,7 +77,7 @@ public static class MouseInput
     }
 }
 
-public class InputKey : TextBox
+class InputKey : TextBox
 {
     public readonly Keys Key;
     private readonly IDisposable Unsubscribe;
@@ -121,7 +121,7 @@ public class InputKey : TextBox
     }
 }
 
-public class KeyGrid : FlowLayoutPanel
+class KeyGrid : FlowLayoutPanel
 {
     private readonly IDisposable Unsubscribe;
 
@@ -180,7 +180,7 @@ public class KeyGrid : FlowLayoutPanel
     }
 }
 
-public partial class MainWindow : Form
+class MainWindow : Form
 {
     public MainWindow(IEnumerable<IEnumerable<Keys>> layoutConfig)
     {

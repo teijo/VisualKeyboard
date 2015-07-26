@@ -12,7 +12,7 @@ using Color = System.Drawing.Color;
 static class NativeMethods
 {
     [DllImport("user32.dll")]
-    public static extern IntPtr CallNextHookEx(IntPtr idHook, int nCode, int wParam, IntPtr lParam);
+    public static extern IntPtr CallNextHookEx(IntPtr idHook, int nCode, IntPtr wParam, IntPtr lParam);
 
     [DllImport("user32.dll")]
     public static extern bool UnhookWindowsHookEx(IntPtr hInstance);
@@ -22,11 +22,11 @@ static class NativeMethods
     [DllImport("user32.dll")]
     public static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc callback, IntPtr hInstance, uint threadId);
 
-    [DllImport("kernel32.dll")]
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
     public static extern IntPtr LoadLibrary(string lpFileName);
 
     [DllImport("user32.dll")]
-    public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+    public static extern IntPtr SendMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
 
     [DllImport("user32.dll")]
     public static extern bool ReleaseCapture();
@@ -46,7 +46,7 @@ static class KeyboardListener
         {
             InputEvent(null, (Keys)Marshal.ReadInt32(lParam));
         }
-        return NativeMethods.CallNextHookEx(HHook, code, (int)wParam, lParam);
+        return NativeMethods.CallNextHookEx(HHook, code, wParam, lParam);
     }
 
     public static void UnHook()
@@ -75,7 +75,7 @@ static class MouseInput
             if (e.Button == MouseButtons.Left)
             {
                 NativeMethods.ReleaseCapture();
-                NativeMethods.SendMessage(handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+                NativeMethods.SendMessage(handle, WM_NCLBUTTONDOWN, (IntPtr)HT_CAPTION, (IntPtr)0);
             }
         };
     }

@@ -77,7 +77,6 @@ namespace VisualKeyboard
                 }
             };
         }
-
     }
 
     public class InputKey : TextBox
@@ -109,7 +108,6 @@ namespace VisualKeyboard
             Unsubscribe.Dispose();
             base.Dispose(disposing);
         }
-
 
         private Action<EventPattern<object>> SetColor(Color color)
         {

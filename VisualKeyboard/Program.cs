@@ -9,25 +9,35 @@ using System.Windows.Forms;
 using VisualKeyboard.Properties;
 using Color = System.Drawing.Color;
 
+static class NativeMethods
+{
+    [DllImport("user32.dll")]
+    public static extern IntPtr CallNextHookEx(IntPtr idHook, int nCode, int wParam, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    public static extern bool UnhookWindowsHookEx(IntPtr hInstance);
+
+    public delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc callback, IntPtr hInstance, uint threadId);
+
+    [DllImport("kernel32.dll")]
+    public static extern IntPtr LoadLibrary(string lpFileName);
+
+    [DllImport("user32.dll")]
+    public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+
+    [DllImport("user32.dll")]
+    public static extern bool ReleaseCapture();
+}
+
 static class KeyboardListener
 {
     public static event EventHandler<Keys> InputEvent;
 
-    private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
-    private static LowLevelKeyboardProc Proc = HookProc;
+    private static NativeMethods.LowLevelKeyboardProc Proc = HookProc;
     private static IntPtr HHook = IntPtr.Zero;
-
-    [DllImport("user32.dll")]
-    static extern IntPtr CallNextHookEx(IntPtr idHook, int nCode, int wParam, IntPtr lParam);
-
-    [DllImport("user32.dll")]
-    static extern bool UnhookWindowsHookEx(IntPtr hInstance);
-
-    [DllImport("user32.dll")]
-    static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc callback, IntPtr hInstance, uint threadId);
-
-    [DllImport("kernel32.dll")]
-    static extern IntPtr LoadLibrary(string lpFileName);
 
     private static IntPtr HookProc(int code, IntPtr wParam, IntPtr lParam)
     {
@@ -36,29 +46,23 @@ static class KeyboardListener
         {
             InputEvent(null, (Keys)Marshal.ReadInt32(lParam));
         }
-        return CallNextHookEx(HHook, code, (int)wParam, lParam);
+        return NativeMethods.CallNextHookEx(HHook, code, (int)wParam, lParam);
     }
 
     public static void UnHook()
     {
-        UnhookWindowsHookEx(HHook);
+        NativeMethods.UnhookWindowsHookEx(HHook);
     }
 
     static KeyboardListener()
     {
         const int WH_KEYBOARD_LL = 13;
-        HHook = SetWindowsHookEx(WH_KEYBOARD_LL, Proc, LoadLibrary("User32"), 0);
+        HHook = NativeMethods.SetWindowsHookEx(WH_KEYBOARD_LL, Proc, NativeMethods.LoadLibrary("User32"), 0);
     }
 }
 
 static class MouseInput
 {
-    [DllImport("user32.dll")]
-    public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
-
-    [DllImport("user32.dll")]
-    public static extern bool ReleaseCapture();
-
     public delegate void EventHandler(object sender, MouseEventArgs e);
 
     public static EventHandler DragWindowFor(IntPtr handle)
@@ -70,8 +74,8 @@ static class MouseInput
         {
             if (e.Button == MouseButtons.Left)
             {
-                ReleaseCapture();
-                SendMessage(handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+                NativeMethods.ReleaseCapture();
+                NativeMethods.SendMessage(handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
             }
         };
     }

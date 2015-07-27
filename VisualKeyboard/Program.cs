@@ -86,6 +86,16 @@ static class MouseInput
     }
 }
 
+struct InputConfig
+{
+    public readonly Keys Key;
+
+    public InputConfig(Keys key)
+    {
+        Key = key;
+    }
+}
+
 class InputKey : Label
 {
     public readonly Keys Key;
@@ -135,10 +145,10 @@ class KeyGrid : FlowLayoutPanel
 {
     private readonly IDisposable Unsubscribe;
 
-    public KeyGrid(IEnumerable<IEnumerable<Keys>> layoutConfig)
+    public KeyGrid(IEnumerable<IEnumerable<InputConfig>> layoutConfig)
     {
         IEnumerable<IEnumerable<InputKey>> keyLayout = layoutConfig
-            .Select(row => row.Select(key => new InputKey(key)).ToList())
+            .Select(row => row.Select(keyConfig => new InputKey(keyConfig.Key)).ToList())
             .ToList();
 
         FlowDirection = FlowDirection.TopDown;
@@ -204,7 +214,7 @@ class KeyGrid : FlowLayoutPanel
 
 class MainWindow : Form
 {
-    public MainWindow(IEnumerable<IEnumerable<Keys>> layoutConfig)
+    public MainWindow(IEnumerable<IEnumerable<InputConfig>> layoutConfig)
     {
         var keyGrid = new KeyGrid(layoutConfig);
         Controls.Add(keyGrid);
@@ -218,13 +228,13 @@ class MainWindow : Form
 
 static class Program
 {
-    private static Keys ParseKey(string key)
+    private static InputConfig ParseKey(string key)
     {
         var firstUpper = char.ToUpper(key[0]) + key.Substring(1).ToLower();
-        return (Keys)Enum.Parse(typeof(Keys), firstUpper);
+        return new InputConfig((Keys)Enum.Parse(typeof(Keys), firstUpper));
     }
 
-    private static IEnumerable<IEnumerable<Keys>> ParseKeyConfig(string configString)
+    private static IEnumerable<IEnumerable<InputConfig>> ParseKeyConfig(string configString)
     {
         return configString
             .Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None)

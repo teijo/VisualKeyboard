@@ -220,7 +220,8 @@ static class Program
 {
     private static Keys ParseKey(string key)
     {
-        return (Keys)Enum.Parse(typeof(Keys), key.ToUpper());
+        var firstUpper = char.ToUpper(key[0]) + key.Substring(1).ToLower();
+        return (Keys)Enum.Parse(typeof(Keys), firstUpper);
     }
 
     private static IEnumerable<IEnumerable<Keys>> ParseKeyConfig(string configString)

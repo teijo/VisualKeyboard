@@ -89,32 +89,35 @@ static class MouseInput
 struct InputConfig
 {
     public readonly Keys Key;
+    public readonly int Width;
 
-    public InputConfig(Keys key)
+    public InputConfig(Keys key, int width)
     {
         Key = key;
+        Width = width;
     }
 }
 
 class InputKey : Label
 {
+    private const int MarginWidth = 4;
+    private const int EdgeUnitWidth = 40;
     public readonly Keys Key;
     private readonly IDisposable Unsubscribe;
     private event EventHandler KeyEvent;
 
-    public InputKey(Keys keyCode)
+    public InputKey(InputConfig keyCode)
     {
-        const int edge = 40;
-        Key = keyCode;
+        var keyWidth = keyCode.Width * EdgeUnitWidth + (keyCode.Width - 1) * MarginWidth * 2;
+        Key = keyCode.Key;
         BorderStyle = BorderStyle.None;
         Enabled = false;
         Dock = DockStyle.Left;
-        MinimumSize = new Size(edge, edge);
-        Text = Enum.GetName(keyCode.GetType(), keyCode);
-        Size = new Size(edge, edge);
+        MinimumSize = new Size(keyWidth, EdgeUnitWidth);
+        Text = Enum.GetName(Key.GetType(), Key);
+        Size = new Size(keyWidth, EdgeUnitWidth);
         TextAlign = ContentAlignment.MiddleCenter;
-        Margin = new Padding(4);
-
+        Margin = new Padding(MarginWidth);
         Unsubscribe = Observable.FromEventPattern(ev => KeyEvent += ev, ev => KeyEvent -= ev)
             .Do(SetColor(Color.Red))
             .Throttle(TimeSpan.FromMilliseconds(1000))
@@ -148,7 +151,7 @@ class KeyGrid : FlowLayoutPanel
     public KeyGrid(IEnumerable<IEnumerable<InputConfig>> layoutConfig)
     {
         IEnumerable<IEnumerable<InputKey>> keyLayout = layoutConfig
-            .Select(row => row.Select(keyConfig => new InputKey(keyConfig.Key)).ToList())
+            .Select(row => row.Select(keyConfig => new InputKey(keyConfig)).ToList())
             .ToList();
 
         FlowDirection = FlowDirection.TopDown;
@@ -228,13 +231,16 @@ class MainWindow : Form
 
 static class Program
 {
-    private static InputConfig ParseKey(string key)
+    private static InputConfig ParseKey(string keyConfig)
     {
-        var firstUpper = char.ToUpper(key[0]) + key.Substring(1).ToLower();
-        return new InputConfig((Keys)Enum.Parse(typeof(Keys), firstUpper));
+        var parts = keyConfig.Split(':');
+        var width = parts.Length > 1 ? int.Parse(parts[1]) : 1;
+        var firstUpper = char.ToUpper(keyConfig[0]) + parts[0].Substring(1).ToLower();
+        var key = (Keys)Enum.Parse(typeof(Keys), firstUpper);
+        return new InputConfig(key, width);
     }
 
-    private static IEnumerable<IEnumerable<InputConfig>> ParseKeyConfig(string configString)
+    private static IEnumerable<IEnumerable<InputConfig>> ParseConfigString(string configString)
     {
         return configString
             .Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None)
@@ -248,7 +254,7 @@ static class Program
 
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
-        Application.Run(new MainWindow(ParseKeyConfig(layoutConfig)));
+        Application.Run(new MainWindow(ParseConfigString(layoutConfig)));
         KeyboardListener.UnHook();
     }
 }

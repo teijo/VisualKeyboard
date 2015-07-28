@@ -90,11 +90,13 @@ struct InputConfig
 {
     public readonly Keys Key;
     public readonly int Width;
+    public readonly string Label;
 
-    public InputConfig(Keys key, int width)
+    public InputConfig(Keys key, int width, string label)
     {
         Key = key;
         Width = width;
+        Label = label;
     }
 }
 
@@ -114,7 +116,7 @@ class InputKey : Label
         Enabled = false;
         Dock = DockStyle.Left;
         MinimumSize = new Size(keyWidth, EdgeUnitWidth);
-        Text = Enum.GetName(Key.GetType(), Key);
+        Text = keyCode.Label;
         Size = new Size(keyWidth, EdgeUnitWidth);
         TextAlign = ContentAlignment.MiddleCenter;
         Margin = new Padding(MarginWidth);
@@ -276,8 +278,10 @@ static class Program
     {
         var parts = keyConfig.Split(':');
         var width = parts.Length > 1 ? int.Parse(parts[1]) : 1;
-        var key = KeySupport.GetKey(parts[0]);
-        return new InputConfig(key, width);
+        var keyString = parts[0];
+        var key = KeySupport.GetKey(keyString);
+        var label = parts.Length > 2 ? parts[2] : keyString;
+        return new InputConfig(key, width, label);
     }
 
     private static IEnumerable<IEnumerable<InputConfig>> ParseConfigString(string configString)

@@ -229,14 +229,54 @@ class MainWindow : Form
     }
 }
 
+static class KeySupport
+{
+    private static readonly Dictionary<string, Keys> Map;
+
+    public static Keys GetKey(string keyString)
+    {
+        return Map[keyString.ToLower()];
+    }
+
+    static KeySupport()
+    {
+        List<Tuple<string, Keys>> entries = new List<Tuple<string, Keys>>();
+
+        var parseableEntries = "qwertyuiopasdfghjklzxcvbnm"
+            .ToCharArray()
+            .Select(char.ToString)
+            .Select(ch => new Tuple<string, Keys>(ch, (Keys)Enum.Parse(typeof(Keys), ch.ToUpper())));
+
+        entries.AddRange(parseableEntries);
+
+        var stringEntries = new List<Tuple<string, Keys>>
+        {
+            Tuple.Create("space", Keys.Space),
+            Tuple.Create("1", Keys.D1),
+            Tuple.Create("2", Keys.D2),
+            Tuple.Create("3", Keys.D3),
+            Tuple.Create("4", Keys.D4),
+            Tuple.Create("5", Keys.D5),
+            Tuple.Create("6", Keys.D6),
+            Tuple.Create("7", Keys.D7),
+            Tuple.Create("8", Keys.D8),
+            Tuple.Create("9", Keys.D9),
+            Tuple.Create("0", Keys.D0),
+        };
+
+        entries.AddRange(stringEntries);
+
+        Map = entries.ToDictionary(e => e.Item1, e => e.Item2);
+    }
+}
+
 static class Program
 {
     private static InputConfig ParseKey(string keyConfig)
     {
         var parts = keyConfig.Split(':');
         var width = parts.Length > 1 ? int.Parse(parts[1]) : 1;
-        var firstUpper = char.ToUpper(keyConfig[0]) + parts[0].Substring(1).ToLower();
-        var key = (Keys)Enum.Parse(typeof(Keys), firstUpper);
+        var key = KeySupport.GetKey(parts[0]);
         return new InputConfig(key, width);
     }
 

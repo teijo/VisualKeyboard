@@ -152,7 +152,7 @@ class InputKey : Label
         BorderStyle = BorderStyle.FixedSingle;
 
         var downs = Observable
-            .FromEventPattern<EventType>(ev => KeyEvent += ev, ev => { return; })
+            .FromEventPattern<EventType>(ev => KeyEvent += ev, ev => KeyEvent -= ev)
             .Select(ev => ev.EventArgs)
             .DistinctUntilChanged()
             .Where(eventType => eventType == EventType.DOWN);

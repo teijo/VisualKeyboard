@@ -114,6 +114,14 @@ struct InputConfig
     }
 }
 
+static class Util
+{
+    public static IObservable<T> ConstantObservable<T>(T value)
+    {
+        return Observable.Never<T>().StartWith(value);
+    }
+}
+
 class InputKey : Label
 {
     private const int MarginWidth = 4;
@@ -151,15 +159,22 @@ class InputKey : Label
         Margin = new Padding(MarginWidth);
         BorderStyle = BorderStyle.FixedSingle;
 
-        var downs = Observable
+        var events = Observable
             .FromEventPattern<EventType>(ev => KeyEvent += ev, ev => KeyEvent -= ev)
             .Select(ev => ev.EventArgs)
-            .DistinctUntilChanged()
-            .Where(eventType => eventType == EventType.DOWN);
+            .DistinctUntilChanged();
+
+        var downColor = events
+            .Where(eventType => eventType == EventType.DOWN)
+            .Select(_ => Util.ConstantObservable(Color.White));
+
+        var upColor = events
+            .Where(eventType => eventType == EventType.UP)
+            .Select(ColorSequence);
 
         Unsubscribe = Observable
-            .Switch(downs.Select(ColorSequence))
-            .Do((color) => { BackColor = color; })
+            .Switch(Observable.Merge(downColor, upColor))
+            .Do((color) => { base.BackColor = color; })
             .Subscribe();
     }
 

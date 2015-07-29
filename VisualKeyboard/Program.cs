@@ -32,9 +32,14 @@ static class NativeMethods
     public static extern bool ReleaseCapture();
 }
 
+enum EventType {
+    DOWN,
+    UP
+}
+
 static class KeyboardListener
 {
-    public static event EventHandler<Keys> InputEvent;
+    public static event EventHandler<Tuple<EventType, Keys>> InputEvent;
 
     private static NativeMethods.LowLevelKeyboardProc Proc = HookProc;
     private static IntPtr HHook = IntPtr.Zero;
@@ -42,9 +47,18 @@ static class KeyboardListener
     private static IntPtr HookProc(int code, IntPtr wParam, IntPtr lParam)
     {
         const int WM_KEYDOWN = 0x100;
-        if (code >= 0 && wParam == (IntPtr)WM_KEYDOWN)
+        const int WM_KEYUP = 0x101;
+        if (code >= 0)
         {
-            InputEvent(null, (Keys)Marshal.ReadInt32(lParam));
+            var keys = (Keys)Marshal.ReadInt32(lParam);
+            switch ((int)wParam) {
+                case WM_KEYDOWN:
+                    InputEvent(null, Tuple.Create(EventType.DOWN, keys));
+                    break;
+                case WM_KEYUP:
+                    InputEvent(null, Tuple.Create(EventType.UP, keys));
+                    break;
+            }
         }
         return NativeMethods.CallNextHookEx(HHook, code, wParam, lParam);
     }
@@ -106,7 +120,22 @@ class InputKey : Label
     private const int EdgeUnitWidth = 40;
     public readonly Keys Key;
     private readonly IDisposable Unsubscribe;
-    private event EventHandler KeyEvent;
+    private event EventHandler<EventType> KeyEvent;
+
+    private static IObservable<Color> ColorSequence<T>(T _)
+    {
+        var sequence = new List<Tuple<Color, int>> {
+            Tuple.Create(Color.Red, 0),
+            Tuple.Create(Color.Yellow, 1000),
+            Tuple.Create(Color.DarkGray, 2000)
+        };
+
+        return Observable.Generate((IEnumerator<Tuple<Color, int>>)sequence.GetEnumerator(),
+            s => s.MoveNext(),
+            s => s,
+            s => s.Current.Item1,
+            s => TimeSpan.FromMilliseconds(s.Current.Item2));
+    }
 
     public InputKey(InputConfig keyCode)
     {
@@ -121,10 +150,16 @@ class InputKey : Label
         TextAlign = ContentAlignment.MiddleCenter;
         Margin = new Padding(MarginWidth);
         BorderStyle = BorderStyle.FixedSingle;
-        Unsubscribe = Observable.FromEventPattern(ev => KeyEvent += ev, ev => KeyEvent -= ev)
-            .Do(SetColor(Color.Red))
-            .Throttle(TimeSpan.FromMilliseconds(1000))
-            .Do(SetColor(Color.Yellow)).Subscribe();
+
+        var downs = Observable
+            .FromEventPattern<EventType>(ev => KeyEvent += ev, ev => { return; })
+            .Select(ev => ev.EventArgs)
+            .Where(eventType => eventType == EventType.DOWN);
+
+        Unsubscribe = Observable
+            .Switch(downs.Select(ColorSequence))
+            .Do((color) => { BackColor = color; })
+            .Subscribe();
     }
 
     protected override void Dispose(bool disposing)
@@ -133,17 +168,9 @@ class InputKey : Label
         base.Dispose(disposing);
     }
 
-    private Action<EventPattern<object>> SetColor(Color color)
+    internal void Trigger(EventType eventType)
     {
-        return (_) =>
-        {
-            BackColor = color;
-        };
-    }
-
-    public void Trigger()
-    {
-        KeyEvent(null, EventArgs.Empty);
+        KeyEvent(null, eventType);
     }
 }
 
@@ -179,17 +206,17 @@ class KeyGrid : FlowLayoutPanel
             .SelectMany(row => row.Select(inputKey => new { inputKey.Key, inputKey }))
             .ToDictionary(entry => entry.Key, entry => entry.inputKey);
 
-        Unsubscribe = Observable.FromEventPattern<Keys>(ev => KeyboardListener.InputEvent += ev, ev => KeyboardListener.InputEvent -= ev)
+        Unsubscribe = Observable.FromEventPattern<Tuple<EventType, Keys>>(ev => KeyboardListener.InputEvent += ev, ev => KeyboardListener.InputEvent -= ev)
             .Select(ev => ev.EventArgs)
             .Do(key =>
             {
-                if (key == Keys.Escape)
+                if (key.Item2 == Keys.Escape)
                 {
                     Application.Exit();
                 }
-                if (keyLookup.ContainsKey(key))
+                if (keyLookup.ContainsKey(key.Item2))
                 {
-                    keyLookup[key].Trigger();
+                    keyLookup[key.Item2].Trigger(key.Item1);
                 }
             })
             .Subscribe();

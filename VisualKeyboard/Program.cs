@@ -39,8 +39,11 @@ enum EventType {
 
 static class KeyboardListener
 {
-    public static event EventHandler<Tuple<EventType, Keys>> InputEvent;
+    public static IObservable<Tuple<EventType, Keys>> AsObservable = Observable
+            .FromEventPattern<Tuple<EventType, Keys>>(ev => InputEvent += ev, ev => InputEvent -= ev)
+            .Select(ev => ev.EventArgs);
 
+    private static event EventHandler<Tuple<EventType, Keys>> InputEvent;
     private static NativeMethods.LowLevelKeyboardProc Proc = HookProc;
     private static IntPtr HHook = IntPtr.Zero;
 
@@ -222,8 +225,8 @@ class KeyGrid : FlowLayoutPanel
             .SelectMany(row => row.Select(inputKey => new { inputKey.Key, inputKey }))
             .ToDictionary(entry => entry.Key, entry => entry.inputKey);
 
-        Unsubscribe = Observable.FromEventPattern<Tuple<EventType, Keys>>(ev => KeyboardListener.InputEvent += ev, ev => KeyboardListener.InputEvent -= ev)
-            .Select(ev => ev.EventArgs)
+        Unsubscribe = KeyboardListener
+            .AsObservable
             .Do(key =>
             {
                 if (key.Item2 == Keys.Escape)

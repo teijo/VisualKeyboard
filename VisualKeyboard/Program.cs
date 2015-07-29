@@ -120,6 +120,7 @@ class InputKey : Label
         Size = new Size(keyWidth, EdgeUnitWidth);
         TextAlign = ContentAlignment.MiddleCenter;
         Margin = new Padding(MarginWidth);
+        BorderStyle = BorderStyle.FixedSingle;
         Unsubscribe = Observable.FromEventPattern(ev => KeyEvent += ev, ev => KeyEvent -= ev)
             .Do(SetColor(Color.Red))
             .Throttle(TimeSpan.FromMilliseconds(1000))
@@ -158,7 +159,7 @@ class KeyGrid : FlowLayoutPanel
 
         FlowDirection = FlowDirection.TopDown;
         AutoSize = true;
-        BackColor = Color.Blue;
+        BackColor = Color.Black;
 
         Controls.AddRange(keyLayout
             .Select(Enumerable.ToArray)
@@ -166,7 +167,7 @@ class KeyGrid : FlowLayoutPanel
             {
                 FlowLayoutPanel rowPanel = new FlowLayoutPanel();
                 rowPanel.FlowDirection = FlowDirection.LeftToRight;
-                rowPanel.BackColor = Color.Pink;
+                rowPanel.BackColor = Color.DarkGray;
                 rowPanel.AutoSize = true;
                 rowPanel.Controls.AddRange(row);
                 rowPanel.Margin = new Padding(0);

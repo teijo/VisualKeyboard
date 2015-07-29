@@ -39,13 +39,13 @@ enum EventType {
 
 static class KeyboardListener
 {
-    public static IObservable<Tuple<EventType, Keys>> AsObservable = Observable
-            .FromEventPattern<Tuple<EventType, Keys>>(ev => InputEvent += ev, ev => InputEvent -= ev)
-            .Select(ev => ev.EventArgs);
-
-    private static event EventHandler<Tuple<EventType, Keys>> InputEvent;
     private static NativeMethods.LowLevelKeyboardProc Proc = HookProc;
     private static IntPtr HHook = IntPtr.Zero;
+
+    private static event EventHandler<Tuple<EventType, Keys>> InputEvent;
+    private static IObservable<Tuple<EventType, Keys>> AsObservable = Observable
+            .FromEventPattern<Tuple<EventType, Keys>>(ev => InputEvent += ev, ev => InputEvent -= ev)
+            .Select(ev => ev.EventArgs);
 
     private static IntPtr HookProc(int code, IntPtr wParam, IntPtr lParam)
     {
@@ -80,6 +80,14 @@ static class KeyboardListener
     {
         const int WH_KEYBOARD_LL = 13;
         HHook = NativeMethods.SetWindowsHookEx(WH_KEYBOARD_LL, Proc, NativeMethods.LoadLibrary("User32"), 0);
+    }
+
+    public static IObservable<EventType> KeyEvents(Keys key)
+    {
+        return AsObservable
+            .Where(e => e.Item2 == key)
+            .Select(e => e.Item1)
+            .DistinctUntilChanged();
     }
 }
 
@@ -131,7 +139,6 @@ class InputKey : Label
     private const int EdgeUnitWidth = 40;
     public readonly Keys Key;
     private readonly IDisposable Unsubscribe;
-    private event EventHandler<EventType> KeyEvent;
 
     private static IObservable<Color> ColorSequence<T>(T _)
     {
@@ -148,7 +155,7 @@ class InputKey : Label
             s => TimeSpan.FromMilliseconds(s.Current.Item2));
     }
 
-    public InputKey(InputConfig keyCode)
+    public InputKey(InputConfig keyCode, IObservable<EventType> keyEvents)
     {
         var keyWidth = keyCode.Width * EdgeUnitWidth + (keyCode.Width - 1) * MarginWidth * 2;
         Key = keyCode.Key;
@@ -162,16 +169,11 @@ class InputKey : Label
         Margin = new Padding(MarginWidth);
         BorderStyle = BorderStyle.FixedSingle;
 
-        var events = Observable
-            .FromEventPattern<EventType>(ev => KeyEvent += ev, ev => KeyEvent -= ev)
-            .Select(ev => ev.EventArgs)
-            .DistinctUntilChanged();
-
-        var downColor = events
+        var downColor = keyEvents
             .Where(eventType => eventType == EventType.DOWN)
             .Select(_ => Util.ConstantObservable(Color.White));
 
-        var upColor = events
+        var upColor = keyEvents
             .Where(eventType => eventType == EventType.UP)
             .Select(ColorSequence);
 
@@ -186,21 +188,14 @@ class InputKey : Label
         Unsubscribe.Dispose();
         base.Dispose(disposing);
     }
-
-    internal void Trigger(EventType eventType)
-    {
-        KeyEvent(null, eventType);
-    }
 }
 
 class KeyGrid : FlowLayoutPanel
 {
-    private readonly IDisposable Unsubscribe;
-
     public KeyGrid(IEnumerable<IEnumerable<InputConfig>> layoutConfig)
     {
         IEnumerable<IEnumerable<InputKey>> keyLayout = layoutConfig
-            .Select(row => row.Select(keyConfig => new InputKey(keyConfig)).ToList())
+            .Select(row => row.Select(keyConfig => new InputKey(keyConfig, KeyboardListener.KeyEvents(keyConfig.Key))).ToList())
             .ToList();
 
         FlowDirection = FlowDirection.TopDown;
@@ -221,24 +216,6 @@ class KeyGrid : FlowLayoutPanel
             })
             .ToArray());
 
-        Dictionary<Keys, InputKey> keyLookup = keyLayout
-            .SelectMany(row => row.Select(inputKey => new { inputKey.Key, inputKey }))
-            .ToDictionary(entry => entry.Key, entry => entry.inputKey);
-
-        Unsubscribe = KeyboardListener
-            .AsObservable
-            .Do(key =>
-            {
-                if (key.Item2 == Keys.Escape)
-                {
-                    Application.Exit();
-                }
-                if (keyLookup.ContainsKey(key.Item2))
-                {
-                    keyLookup[key.Item2].Trigger(key.Item1);
-                }
-            })
-            .Subscribe();
     }
 
     // Initial passthrough for dragging: http://stackoverflow.com/a/8635626
@@ -255,12 +232,6 @@ class KeyGrid : FlowLayoutPanel
         {
             base.WndProc(ref m);
         }
-    }
-
-    protected override void Dispose(bool disposing)
-    {
-        Unsubscribe.Dispose();
-        base.Dispose(disposing);
     }
 }
 
@@ -341,6 +312,8 @@ static class Program
     [STAThread]
     static void Main()
     {
+        KeyboardListener.KeyEvents(Keys.Escape).Subscribe(_ => Application.Exit());
+
         string layoutConfig = System.Text.Encoding.Default.GetString(Resources.DefaultLayout);
 
         Application.EnableVisualStyles();

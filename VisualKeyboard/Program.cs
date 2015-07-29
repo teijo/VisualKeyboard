@@ -154,6 +154,7 @@ class InputKey : Label
         var downs = Observable
             .FromEventPattern<EventType>(ev => KeyEvent += ev, ev => { return; })
             .Select(ev => ev.EventArgs)
+            .DistinctUntilChanged()
             .Where(eventType => eventType == EventType.DOWN);
 
         Unsubscribe = Observable

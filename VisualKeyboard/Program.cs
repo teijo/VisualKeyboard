@@ -215,7 +215,6 @@ class KeyGrid : FlowLayoutPanel
                 return rowPanel;
             })
             .ToArray());
-
     }
 }
 

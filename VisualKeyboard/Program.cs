@@ -201,6 +201,7 @@ class KeyGrid : FlowLayoutPanel
         FlowDirection = FlowDirection.TopDown;
         AutoSize = true;
         BackColor = Color.Black;
+        Enabled = false;
 
         Controls.AddRange(keyLayout
             .Select(Enumerable.ToArray)
@@ -216,22 +217,6 @@ class KeyGrid : FlowLayoutPanel
             })
             .ToArray());
 
-    }
-
-    // Initial passthrough for dragging: http://stackoverflow.com/a/8635626
-    protected override void WndProc(ref Message m)
-    {
-        const int WM_NCHITTEST = 0x0084;
-        const int HTTRANSPARENT = (-1);
-
-        if (m.Msg == WM_NCHITTEST)
-        {
-            m.Result = (IntPtr)HTTRANSPARENT;
-        }
-        else
-        {
-            base.WndProc(ref m);
-        }
     }
 }
 

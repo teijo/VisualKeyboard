@@ -132,11 +132,25 @@ static class Util
     }
 }
 
-class InputKey : Label
+class BlankKey : Label
 {
     private const int MarginWidth = 4;
     private const int EdgeUnitWidth = 40;
-    public readonly Keys Key;
+
+    public BlankKey(InputConfig keyCode)
+    {
+        var keyWidth = keyCode.Width * EdgeUnitWidth + (keyCode.Width - 1) * MarginWidth * 2;
+        Enabled = false;
+        Dock = DockStyle.Left;
+        MinimumSize = new Size(keyWidth, EdgeUnitWidth);
+        Size = new Size(keyWidth, EdgeUnitWidth);
+        TextAlign = ContentAlignment.MiddleCenter;
+        Margin = new Padding(MarginWidth);
+    }
+}
+
+class InputKey : BlankKey
+{
     private readonly IDisposable Unsubscribe;
 
     private static IObservable<Color> ColorSequence<T>(T _)
@@ -154,19 +168,11 @@ class InputKey : Label
             s => TimeSpan.FromMilliseconds(s.Current.Item2));
     }
 
-    public InputKey(InputConfig keyCode, IObservable<EventType> keyEvents)
+    public InputKey(InputConfig keyCode, IObservable<EventType> keyEvents) : base(keyCode)
     {
-        var keyWidth = keyCode.Width * EdgeUnitWidth + (keyCode.Width - 1) * MarginWidth * 2;
-        Key = keyCode.Key;
         BorderStyle = BorderStyle.None;
-        Enabled = false;
-        Dock = DockStyle.Left;
-        MinimumSize = new Size(keyWidth, EdgeUnitWidth);
         Text = keyCode.Label;
-        Size = new Size(keyWidth, EdgeUnitWidth);
-        TextAlign = ContentAlignment.MiddleCenter;
-        Margin = new Padding(MarginWidth);
-        BorderStyle = BorderStyle.FixedSingle;
+        BackColor = Color.DarkGray;
 
         var downColor = keyEvents
             .Where(eventType => eventType == EventType.DOWN)
@@ -193,8 +199,8 @@ class KeyGrid : FlowLayoutPanel
 {
     public KeyGrid(IEnumerable<IEnumerable<InputConfig>> layoutConfig)
     {
-        IEnumerable<IEnumerable<InputKey>> keyLayout = layoutConfig
-            .Select(row => row.Select(keyConfig => new InputKey(keyConfig, KeyboardListener.KeyEvents(keyConfig.Key))).ToList())
+        IEnumerable<IEnumerable<Label>> keyLayout = layoutConfig
+            .Select(row => row.Select(keyConfig => (keyConfig.Key == Keys.None) ? new BlankKey(keyConfig) : new InputKey(keyConfig, KeyboardListener.KeyEvents(keyConfig.Key))).ToList())
             .ToList();
 
         FlowDirection = FlowDirection.TopDown;
@@ -208,7 +214,6 @@ class KeyGrid : FlowLayoutPanel
             {
                 FlowLayoutPanel rowPanel = new FlowLayoutPanel();
                 rowPanel.FlowDirection = FlowDirection.LeftToRight;
-                rowPanel.BackColor = Color.DarkGray;
                 rowPanel.AutoSize = true;
                 rowPanel.Controls.AddRange(row);
                 rowPanel.Margin = new Padding(0);
@@ -265,6 +270,7 @@ static class KeySupport
             Tuple.Create("8", Keys.D8),
             Tuple.Create("9", Keys.D9),
             Tuple.Create("0", Keys.D0),
+            Tuple.Create("-", Keys.None),
         };
 
         entries.AddRange(stringEntries);

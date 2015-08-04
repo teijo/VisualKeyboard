@@ -235,6 +235,24 @@ class MainWindow : Form
         AutoSize = true;
         MouseDown += new MouseEventHandler(MouseInput.DragWindowFor(Handle));
     }
+
+    private void SnapNear(int formEdge, int screenEdge, Func<int> doSnap)
+    {
+        const int distance = 40;
+        if (Math.Abs(formEdge - screenEdge) <= distance)
+        {
+            doSnap();
+        }
+    }
+
+    protected override void OnResizeEnd(EventArgs e)
+    {
+        var screen = Screen.FromPoint(Location).WorkingArea;
+        SnapNear(Left, screen.Left,     () => Left = screen.Left);
+        SnapNear(Top, screen.Top,       () => Top = screen.Top);
+        SnapNear(screen.Right, Right,   () => Left = screen.Right - Width);
+        SnapNear(screen.Bottom, Bottom, () => Top = screen.Bottom - Height);
+    }
 }
 
 static class KeySupport

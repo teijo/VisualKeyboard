@@ -229,7 +229,9 @@ class MainWindow : Form
     {
         var keyGrid = new KeyGrid(layoutConfig);
         Controls.Add(keyGrid);
-        FormBorderStyle = FormBorderStyle.None;
+        FormBorderStyle = FormBorderStyle.Sizable;
+        ControlBox = false;
+        Text = String.Empty;
         Height = keyGrid.Height;
         TopMost = true;
         AutoSize = true;

@@ -137,15 +137,19 @@ class BlankKey : Label
     private const int MarginWidth = 4;
     private const int EdgeUnitWidth = 40;
 
-    public BlankKey(InputConfig keyCode)
+    public BlankKey(InputConfig keyCode, IObservable<Size> windowSizes)
     {
-        var keyWidth = keyCode.Width * EdgeUnitWidth + (keyCode.Width - 1) * MarginWidth * 2;
+        windowSizes.Subscribe(sizes =>
+        {
+            var keyWidth = keyCode.Width * sizes.Width;
+            MinimumSize = new Size(keyWidth, sizes.Height);
+            Size = new Size(keyWidth, sizes.Height);
+        });
+        AutoSize = true;
         Enabled = false;
         Dock = DockStyle.Left;
-        MinimumSize = new Size(keyWidth, EdgeUnitWidth);
-        Size = new Size(keyWidth, EdgeUnitWidth);
         TextAlign = ContentAlignment.MiddleCenter;
-        Margin = new Padding(MarginWidth);
+        Margin = new Padding(0);
     }
 }
 
@@ -168,7 +172,7 @@ class InputKey : BlankKey
             s => TimeSpan.FromMilliseconds(s.Current.Item2));
     }
 
-    public InputKey(InputConfig keyCode, IObservable<EventType> keyEvents) : base(keyCode)
+    public InputKey(InputConfig keyCode, IObservable<Size> windowSizes, IObservable<EventType> keyEvents) : base(keyCode, windowSizes)
     {
         BorderStyle = BorderStyle.None;
         Text = keyCode.Label;
@@ -197,14 +201,17 @@ class InputKey : BlankKey
 
 class KeyGrid : FlowLayoutPanel
 {
-    public KeyGrid(IEnumerable<IEnumerable<InputConfig>> layoutConfig)
+    public KeyGrid(IEnumerable<IEnumerable<InputConfig>> layoutConfig, IObservable<Size> windowSizes)
     {
+        var gridDimensions = GridDimensions(layoutConfig);
+        IObservable<Size> keySizes = windowSizes
+            .Select(size => new Size(size.Width / gridDimensions.Item1, size.Height / gridDimensions.Item2));
         IEnumerable<IEnumerable<Label>> keyLayout = layoutConfig
-            .Select(row => row.Select(keyConfig => (keyConfig.Key == Keys.None) ? new BlankKey(keyConfig) : new InputKey(keyConfig, KeyboardListener.KeyEvents(keyConfig.Key))).ToList())
+            .Select(row => row.Select(keyConfig => (keyConfig.Key == Keys.None) ? new BlankKey(keyConfig, keySizes) : new InputKey(keyConfig, keySizes, KeyboardListener.KeyEvents(keyConfig.Key))).ToList())
             .ToList();
 
         FlowDirection = FlowDirection.TopDown;
-        AutoSize = true;
+        Dock = DockStyle.Fill;
         BackColor = Color.Black;
         Enabled = false;
 
@@ -221,18 +228,26 @@ class KeyGrid : FlowLayoutPanel
             })
             .ToArray());
     }
+
+    private static Tuple<int, int> GridDimensions(IEnumerable<IEnumerable<InputConfig>> layoutConfig)
+    {
+        var width = layoutConfig.Aggregate(0, (a, b) => Math.Max(a, b.Count()));
+        var height = layoutConfig.Count();
+        return Tuple.Create(width, height);
+    }
 }
 
 class MainWindow : Form
 {
     public MainWindow(IEnumerable<IEnumerable<InputConfig>> layoutConfig)
     {
-        var keyGrid = new KeyGrid(layoutConfig);
+        var resizeObservable = Observable.FromEventPattern<EventArgs>(this, "Resize").Select(_ => ClientSize);
+        var keyGrid = new KeyGrid(layoutConfig, resizeObservable);
         Controls.Add(keyGrid);
         FormBorderStyle = FormBorderStyle.Sizable;
         ControlBox = false;
         Text = String.Empty;
-        Height = keyGrid.Height;
+        ClientSize = new Size(300, 200); // Initial size
         TopMost = true;
         AutoSize = true;
         MouseDown += new MouseEventHandler(MouseInput.DragWindowFor(Handle));

@@ -134,22 +134,23 @@ static class Util
 
 class BlankKey : Label
 {
-    private const int MarginWidth = 4;
-    private const int EdgeUnitWidth = 40;
+    private const int MarginWidth = 1;
 
     public BlankKey(InputConfig keyCode, IObservable<Size> windowSizes)
     {
         windowSizes.Subscribe(sizes =>
         {
-            var keyWidth = keyCode.Width * sizes.Width;
-            MinimumSize = new Size(keyWidth, sizes.Height);
-            Size = new Size(keyWidth, sizes.Height);
+            var keySize = new Size(
+                keyCode.Width * sizes.Width - 2 * MarginWidth,
+                sizes.Height - 2 * MarginWidth);
+            MinimumSize = keySize;
+            Size = MinimumSize;
         });
         AutoSize = true;
         Enabled = false;
         Dock = DockStyle.Left;
         TextAlign = ContentAlignment.MiddleCenter;
-        Margin = new Padding(0);
+        Margin = new Padding(MarginWidth);
     }
 }
 

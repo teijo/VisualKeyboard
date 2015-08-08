@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reactive.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using System.Threading;
 using VisualKeyboard.Properties;
 using Color = System.Drawing.Color;
 
@@ -202,11 +203,8 @@ class InputKey : BlankKey
 
 class KeyGrid : FlowLayoutPanel
 {
-    public KeyGrid(IEnumerable<IEnumerable<InputConfig>> layoutConfig, IObservable<Size> windowSizes)
+    public KeyGrid(IEnumerable<IEnumerable<InputConfig>> layoutConfig, Tuple<int, int> gridDimensions, IObservable<Size> keySizes)
     {
-        var gridDimensions = GridDimensions(layoutConfig);
-        IObservable<Size> keySizes = windowSizes
-            .Select(size => new Size(size.Width / gridDimensions.Item1, size.Height / gridDimensions.Item2));
         IEnumerable<IEnumerable<Label>> keyLayout = layoutConfig
             .Select(row => row.Select(keyConfig => (keyConfig.Key == Keys.None) ? new BlankKey(keyConfig, keySizes) : new InputKey(keyConfig, keySizes, KeyboardListener.KeyEvents(keyConfig.Key))).ToList())
             .ToList();
@@ -229,21 +227,28 @@ class KeyGrid : FlowLayoutPanel
             })
             .ToArray());
     }
-
-    private static Tuple<int, int> GridDimensions(IEnumerable<IEnumerable<InputConfig>> layoutConfig)
-    {
-        var width = layoutConfig.Aggregate(0, (a, b) => Math.Max(a, b.Count()));
-        var height = layoutConfig.Count();
-        return Tuple.Create(width, height);
-    }
 }
 
 class MainWindow : Form
 {
     public MainWindow(IEnumerable<IEnumerable<InputConfig>> layoutConfig)
     {
-        var resizeObservable = Observable.FromEventPattern<EventArgs>(this, "Resize").Select(_ => ClientSize);
-        var keyGrid = new KeyGrid(layoutConfig, resizeObservable);
+        var gridDimensions = GridDimensions(layoutConfig);
+        var sizeChanges = Observable
+            .FromEventPattern<EventArgs>(this, "Resize")
+            .Select(_ => ClientSize);
+
+        IObservable<Size> keySizes = sizeChanges
+            .Select(size => new Size(size.Width / gridDimensions.Item1, size.Height / gridDimensions.Item2));
+
+        sizeChanges
+            .Throttle(TimeSpan.FromMilliseconds(200))
+            .Zip(keySizes.Latest(), (_, keySize) => keySize)
+            .ObserveOn(SynchronizationContext.Current)
+            .Do(keySize => ClientSize = new Size(keySize.Width * gridDimensions.Item1, keySize.Height * gridDimensions.Item2))
+            .Subscribe();
+
+        var keyGrid = new KeyGrid(layoutConfig, gridDimensions, keySizes);
         Controls.Add(keyGrid);
         FormBorderStyle = FormBorderStyle.Sizable;
         ControlBox = false;
@@ -252,6 +257,13 @@ class MainWindow : Form
         TopMost = true;
         AutoSize = true;
         MouseDown += new MouseEventHandler(MouseInput.DragWindowFor(Handle));
+    }
+
+    private static Tuple<int, int> GridDimensions(IEnumerable<IEnumerable<InputConfig>> layoutConfig)
+    {
+        var width = layoutConfig.Aggregate(0, (a, b) => Math.Max(a, b.Count()));
+        var height = layoutConfig.Count();
+        return Tuple.Create(width, height);
     }
 
     private void SnapNear(int delta, Func<int> doSnap)

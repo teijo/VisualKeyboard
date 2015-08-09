@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reactive.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using System.Text.RegularExpressions;
 using System.Threading;
 using VisualKeyboard.Properties;
 using Color = System.Drawing.Color;
@@ -406,7 +407,7 @@ static class Program
     {
         return configString
             .Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None)
-            .Select(row => row.Split(' ').Select(ParseKey));
+            .Select(row => Regex.Split(row, "\\s+").Select(ParseKey));
     }
 
     [STAThread]

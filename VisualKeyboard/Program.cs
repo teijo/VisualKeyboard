@@ -259,6 +259,24 @@ class MainWindow : Form
 
         var resizeEnd = Observable.FromEventPattern<EventArgs>(this, "ResizeEnd");
         resizeEnd.Subscribe(_ => SnapToScreen());
+
+        var sizeToolTip = new ToolTip();
+        Observable
+            .FromEventPattern<EventArgs>(this, "ResizeBegin")
+            .Do(_ =>
+            {
+                var end = resizeEnd
+                    .Take(1)
+                    .Delay(TimeSpan.FromSeconds(1))
+                    .ObserveOn(SynchronizationContext.Current)
+                    .Do(_2 => sizeToolTip.Hide(this));
+
+                sizeChanges
+                    .TakeUntil(end)
+                    .Do(clientSize => sizeToolTip.Show(clientSize.Width + "x" + clientSize.Height, this, 0, 0))
+                    .Subscribe();
+            })
+            .Subscribe();
     }
 
     private static Tuple<int, int> GridDimensions(IEnumerable<IEnumerable<InputConfig>> layoutConfig)

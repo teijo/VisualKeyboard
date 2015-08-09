@@ -171,11 +171,12 @@ class BlankKey : Label
 class InputKey : BlankKey
 {
     private readonly IDisposable Unsubscribe;
+    private static readonly Color KeyDefaultColor = Color.DarkGray;
     private static readonly Color KeyDownColor = Color.Red;
     private static readonly List<Tuple<Color, int>> sequence = new List<Tuple<Color, int>> {
         Tuple.Create(KeyDownColor, 200),
         Tuple.Create(Color.Gray, 0),
-        Tuple.Create(Color.DarkGray, 3000)
+        Tuple.Create(KeyDefaultColor, 3000)
     };
 
     private static IObservable<Color> ColorSequence<T>(T _)
@@ -191,7 +192,7 @@ class InputKey : BlankKey
     {
         BorderStyle = BorderStyle.None;
         Text = keyCode.Label;
-        BackColor = Color.DarkGray;
+        BackColor = KeyDefaultColor;
 
         var downColor = keyEvents
             .Where(eventType => eventType == EventType.DOWN)

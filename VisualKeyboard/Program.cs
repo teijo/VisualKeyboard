@@ -267,7 +267,7 @@ class MainWindow : Form
             {
                 var end = resizeEnd
                     .Take(1)
-                    .Delay(TimeSpan.FromSeconds(1))
+                    .Delay(TimeSpan.FromSeconds(2))
                     .ObserveOn(SynchronizationContext.Current)
                     .Do(_2 => sizeToolTip.Hide(this));
 

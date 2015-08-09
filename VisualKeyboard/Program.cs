@@ -171,15 +171,15 @@ class BlankKey : Label
 class InputKey : BlankKey
 {
     private readonly IDisposable Unsubscribe;
+    private static readonly Color KeyDownColor = Color.Red;
+    private static readonly List<Tuple<Color, int>> sequence = new List<Tuple<Color, int>> {
+        Tuple.Create(KeyDownColor, 200),
+        Tuple.Create(Color.Gray, 0),
+        Tuple.Create(Color.DarkGray, 3000)
+    };
 
     private static IObservable<Color> ColorSequence<T>(T _)
     {
-        var sequence = new List<Tuple<Color, int>> {
-            Tuple.Create(Color.Red, 0),
-            Tuple.Create(Color.Yellow, 1000),
-            Tuple.Create(Color.DarkGray, 2000)
-        };
-
         return Observable.Generate((IEnumerator<Tuple<Color, int>>)sequence.GetEnumerator(),
             s => s.MoveNext(),
             s => s,
@@ -195,7 +195,7 @@ class InputKey : BlankKey
 
         var downColor = keyEvents
             .Where(eventType => eventType == EventType.DOWN)
-            .Select(_ => Util.ConstantObservable(Color.White));
+            .Select(_ => Util.ConstantObservable(KeyDownColor));
 
         var upColor = keyEvents
             .Where(eventType => eventType == EventType.UP)

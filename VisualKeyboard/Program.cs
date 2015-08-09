@@ -233,6 +233,12 @@ class MainWindow : Form
 {
     public MainWindow(IEnumerable<IEnumerable<InputConfig>> layoutConfig)
     {
+        FormBorderStyle = FormBorderStyle.Sizable;
+        ControlBox = false;
+        Text = String.Empty;
+        TopMost = true;
+        MouseDown += new MouseEventHandler(MouseInput.DragWindowFor(Handle));
+
         var gridDimensions = GridDimensions(layoutConfig);
         var sizeChanges = Observable
             .FromEventPattern<EventArgs>(this, "Resize")
@@ -248,15 +254,8 @@ class MainWindow : Form
             .Do(keySize => ClientSize = new Size(keySize.Width * gridDimensions.Item1, keySize.Height * gridDimensions.Item2))
             .Subscribe();
 
-        var keyGrid = new KeyGrid(layoutConfig, gridDimensions, keySizes);
-        Controls.Add(keyGrid);
-        FormBorderStyle = FormBorderStyle.Sizable;
-        ControlBox = false;
-        Text = String.Empty;
+        Controls.Add(new KeyGrid(layoutConfig, gridDimensions, keySizes));
         ClientSize = new Size(300, 200); // Initial size
-        TopMost = true;
-        AutoSize = true;
-        MouseDown += new MouseEventHandler(MouseInput.DragWindowFor(Handle));
     }
 
     private static Tuple<int, int> GridDimensions(IEnumerable<IEnumerable<InputConfig>> layoutConfig)

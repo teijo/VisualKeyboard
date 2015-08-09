@@ -233,7 +233,7 @@ class MainWindow : Form
 {
     public MainWindow(IEnumerable<IEnumerable<InputConfig>> layoutConfig)
     {
-        FormBorderStyle = FormBorderStyle.Sizable;
+        FormBorderStyle = FormBorderStyle.None;
         ControlBox = false;
         Text = String.Empty;
         TopMost = true;
@@ -302,6 +302,47 @@ class MainWindow : Form
         SnapNear(Top - screen.Top,       () => Top = screen.Top);
         SnapNear(screen.Right - Right,   () => Left = screen.Right - Width);
         SnapNear(screen.Bottom - Bottom, () => Top = screen.Bottom - Height);
+    }
+
+    protected override void WndProc(ref Message m)
+    {
+        const uint WM_NCHITTEST = 0x0084;
+        const uint WM_MOUSEMOVE = 0x0200;
+
+        const uint HTLEFT = 10;
+        const uint HTRIGHT = 11;
+        const uint HTBOTTOMRIGHT = 17;
+        const uint HTBOTTOM = 15;
+        const uint HTBOTTOMLEFT = 16;
+        const uint HTTOP = 12;
+        const uint HTTOPLEFT = 13;
+        const uint HTTOPRIGHT = 14;
+
+        const int BorderWidth = 8;
+
+        if (m.Msg == WM_NCHITTEST || m.Msg == WM_MOUSEMOVE)
+        {
+            var boxes = new List<Tuple<uint, Rectangle>>() {
+                Tuple.Create(HTBOTTOMLEFT, new Rectangle(0, Size.Height - BorderWidth, BorderWidth, BorderWidth)),
+                Tuple.Create(HTBOTTOM, new Rectangle(BorderWidth, Size.Height - BorderWidth, Size.Width - 2 * BorderWidth, BorderWidth)),
+                Tuple.Create(HTBOTTOMRIGHT, new Rectangle(Size.Width - BorderWidth, Size.Height - BorderWidth, BorderWidth, BorderWidth)),
+                Tuple.Create(HTRIGHT, new Rectangle(Size.Width - BorderWidth, BorderWidth, BorderWidth, Size.Height - 2 * BorderWidth)),
+                Tuple.Create(HTTOPRIGHT, new Rectangle(Size.Width - BorderWidth, 0, BorderWidth, BorderWidth)),
+                Tuple.Create(HTTOP, new Rectangle(BorderWidth, 0, Size.Width - 2 * BorderWidth, BorderWidth)),
+                Tuple.Create(HTTOPLEFT, new Rectangle(0, 0, BorderWidth, BorderWidth)),
+                Tuple.Create(HTLEFT, new Rectangle(0, BorderWidth, BorderWidth, Size.Height - 2 * BorderWidth))
+            };
+
+            Point clientPoint = PointToClient(new Point(m.LParam.ToInt32()));
+            var edge = boxes.FirstOrDefault(border => border.Item2.Contains(clientPoint));
+
+            if (edge != null)
+            {
+                m.Result = (IntPtr)edge.Item1;
+                return;
+            }
+        }
+        base.WndProc(ref m);
     }
 }
 

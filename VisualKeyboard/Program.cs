@@ -256,6 +256,9 @@ class MainWindow : Form
 
         Controls.Add(new KeyGrid(layoutConfig, gridDimensions, keySizes));
         ClientSize = new Size(300, 200); // Initial size
+
+        var resizeEnd = Observable.FromEventPattern<EventArgs>(this, "ResizeEnd");
+        resizeEnd.Subscribe(_ => SnapToScreen());
     }
 
     private static Tuple<int, int> GridDimensions(IEnumerable<IEnumerable<InputConfig>> layoutConfig)
@@ -265,7 +268,7 @@ class MainWindow : Form
         return Tuple.Create(width, height);
     }
 
-    private void SnapNear(int delta, Func<int> doSnap)
+    private static void SnapNear(int delta, Func<int> doSnap)
     {
         const int distance = 40;
         if (Math.Abs(delta) <= distance)
@@ -274,7 +277,7 @@ class MainWindow : Form
         }
     }
 
-    protected override void OnResizeEnd(EventArgs e)
+    private void SnapToScreen()
     {
         var screen = Screen.FromPoint(Location).WorkingArea;
         SnapNear(Left - screen.Left,     () => Left = screen.Left);

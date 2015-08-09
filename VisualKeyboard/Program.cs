@@ -9,6 +9,25 @@ using System.Threading;
 using VisualKeyboard.Properties;
 using Color = System.Drawing.Color;
 
+static class Defs
+{
+    public const uint WM_KEYDOWN = 0x100;
+    public const uint WM_KEYUP = 0x101;
+    public const uint WH_KEYBOARD_LL = 13;
+    public const uint WM_NCLBUTTONDOWN = 0xA1;
+    public const uint HT_CAPTION = 0x2;
+    public const uint WM_NCHITTEST = 0x0084;
+    public const uint WM_MOUSEMOVE = 0x0200;
+    public const uint HTLEFT = 10;
+    public const uint HTRIGHT = 11;
+    public const uint HTBOTTOMRIGHT = 17;
+    public const uint HTBOTTOM = 15;
+    public const uint HTBOTTOMLEFT = 16;
+    public const uint HTTOP = 12;
+    public const uint HTTOPLEFT = 13;
+    public const uint HTTOPRIGHT = 14;
+}
+
 static class NativeMethods
 {
     [DllImport("user32.dll")]
@@ -20,13 +39,13 @@ static class NativeMethods
     public delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
 
     [DllImport("user32.dll")]
-    public static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc callback, IntPtr hInstance, uint threadId);
+    public static extern IntPtr SetWindowsHookEx(uint idHook, LowLevelKeyboardProc callback, IntPtr hInstance, uint threadId);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
     public static extern IntPtr LoadLibrary(string lpFileName);
 
     [DllImport("user32.dll")]
-    public static extern IntPtr SendMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
+    public static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
     [DllImport("user32.dll")]
     public static extern bool ReleaseCapture();
@@ -49,16 +68,14 @@ static class KeyboardListener
 
     private static IntPtr HookProc(int code, IntPtr wParam, IntPtr lParam)
     {
-        const int WM_KEYDOWN = 0x100;
-        const int WM_KEYUP = 0x101;
         if (code >= 0)
         {
             var keys = (Keys)Marshal.ReadInt32(lParam);
-            switch ((int)wParam) {
-                case WM_KEYDOWN:
+            switch ((uint)wParam) {
+                case Defs.WM_KEYDOWN:
                     InputEvent(null, Tuple.Create(EventType.DOWN, keys));
                     break;
-                case WM_KEYUP:
+                case Defs.WM_KEYUP:
                     InputEvent(null, Tuple.Create(EventType.UP, keys));
                     break;
             }
@@ -78,8 +95,7 @@ static class KeyboardListener
 
     static KeyboardListener()
     {
-        const int WH_KEYBOARD_LL = 13;
-        HHook = NativeMethods.SetWindowsHookEx(WH_KEYBOARD_LL, Proc, NativeMethods.LoadLibrary("User32"), 0);
+        HHook = NativeMethods.SetWindowsHookEx(Defs.WH_KEYBOARD_LL, Proc, NativeMethods.LoadLibrary("User32"), 0);
     }
 
     public static IObservable<EventType> KeyEvents(Keys key)
@@ -97,15 +113,12 @@ static class MouseInput
 
     public static EventHandler DragWindowFor(IntPtr handle)
     {
-        const int WM_NCLBUTTONDOWN = 0xA1;
-        const int HT_CAPTION = 0x2;
-
         return (object sender, MouseEventArgs e) =>
         {
             if (e.Button == MouseButtons.Left)
             {
                 NativeMethods.ReleaseCapture();
-                NativeMethods.SendMessage(handle, WM_NCLBUTTONDOWN, (IntPtr)HT_CAPTION, IntPtr.Zero);
+                NativeMethods.SendMessage(handle, Defs.WM_NCLBUTTONDOWN, (IntPtr)Defs.HT_CAPTION, IntPtr.Zero);
             }
         };
     }
@@ -306,31 +319,19 @@ class MainWindow : Form
 
     protected override void WndProc(ref Message m)
     {
-        const uint WM_NCHITTEST = 0x0084;
-        const uint WM_MOUSEMOVE = 0x0200;
-
-        const uint HTLEFT = 10;
-        const uint HTRIGHT = 11;
-        const uint HTBOTTOMRIGHT = 17;
-        const uint HTBOTTOM = 15;
-        const uint HTBOTTOMLEFT = 16;
-        const uint HTTOP = 12;
-        const uint HTTOPLEFT = 13;
-        const uint HTTOPRIGHT = 14;
-
         const int BorderWidth = 8;
 
-        if (m.Msg == WM_NCHITTEST || m.Msg == WM_MOUSEMOVE)
+        if (m.Msg == Defs.WM_NCHITTEST || m.Msg == Defs.WM_MOUSEMOVE)
         {
             var boxes = new List<Tuple<uint, Rectangle>>() {
-                Tuple.Create(HTBOTTOMLEFT, new Rectangle(0, Size.Height - BorderWidth, BorderWidth, BorderWidth)),
-                Tuple.Create(HTBOTTOM, new Rectangle(BorderWidth, Size.Height - BorderWidth, Size.Width - 2 * BorderWidth, BorderWidth)),
-                Tuple.Create(HTBOTTOMRIGHT, new Rectangle(Size.Width - BorderWidth, Size.Height - BorderWidth, BorderWidth, BorderWidth)),
-                Tuple.Create(HTRIGHT, new Rectangle(Size.Width - BorderWidth, BorderWidth, BorderWidth, Size.Height - 2 * BorderWidth)),
-                Tuple.Create(HTTOPRIGHT, new Rectangle(Size.Width - BorderWidth, 0, BorderWidth, BorderWidth)),
-                Tuple.Create(HTTOP, new Rectangle(BorderWidth, 0, Size.Width - 2 * BorderWidth, BorderWidth)),
-                Tuple.Create(HTTOPLEFT, new Rectangle(0, 0, BorderWidth, BorderWidth)),
-                Tuple.Create(HTLEFT, new Rectangle(0, BorderWidth, BorderWidth, Size.Height - 2 * BorderWidth))
+                Tuple.Create(Defs.HTBOTTOMLEFT, new Rectangle(0, Size.Height - BorderWidth, BorderWidth, BorderWidth)),
+                Tuple.Create(Defs.HTBOTTOM, new Rectangle(BorderWidth, Size.Height - BorderWidth, Size.Width - 2 * BorderWidth, BorderWidth)),
+                Tuple.Create(Defs.HTBOTTOMRIGHT, new Rectangle(Size.Width - BorderWidth, Size.Height - BorderWidth, BorderWidth, BorderWidth)),
+                Tuple.Create(Defs.HTRIGHT, new Rectangle(Size.Width - BorderWidth, BorderWidth, BorderWidth, Size.Height - 2 * BorderWidth)),
+                Tuple.Create(Defs.HTTOPRIGHT, new Rectangle(Size.Width - BorderWidth, 0, BorderWidth, BorderWidth)),
+                Tuple.Create(Defs.HTTOP, new Rectangle(BorderWidth, 0, Size.Width - 2 * BorderWidth, BorderWidth)),
+                Tuple.Create(Defs.HTTOPLEFT, new Rectangle(0, 0, BorderWidth, BorderWidth)),
+                Tuple.Create(Defs.HTLEFT, new Rectangle(0, BorderWidth, BorderWidth, Size.Height - 2 * BorderWidth))
             };
 
             Point clientPoint = PointToClient(new Point(m.LParam.ToInt32()));

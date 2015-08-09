@@ -294,7 +294,7 @@ class MainWindow : Form
 
     private static Tuple<int, int> GridDimensions(IEnumerable<IEnumerable<InputConfig>> layoutConfig)
     {
-        var width = layoutConfig.Aggregate(0, (a, b) => Math.Max(a, b.Count()));
+        var width = layoutConfig.Aggregate(0, (w, row) => Math.Max(w, row.Aggregate(0, (rW, key) => rW + key.Width)));
         var height = layoutConfig.Count();
         return Tuple.Create(width, height);
     }

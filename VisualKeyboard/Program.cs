@@ -27,6 +27,7 @@ static class Defs
     public const uint HTTOP = 12;
     public const uint HTTOPLEFT = 13;
     public const uint HTTOPRIGHT = 14;
+    public const int HTTRANSPARENT = -1;
 }
 
 static class NativeMethods
@@ -162,10 +163,21 @@ class BlankKey : Label
             Size = MinimumSize;
         });
         AutoSize = true;
-        Enabled = false;
         Dock = DockStyle.Left;
         TextAlign = ContentAlignment.MiddleCenter;
         Margin = new Padding(MarginWidth);
+    }
+
+    protected override void WndProc(ref Message m)
+    {
+        if (m.Msg == Defs.WM_NCHITTEST)
+        {
+            m.Result = (IntPtr)Defs.HTTRANSPARENT;
+        }
+        else
+        {
+            base.WndProc(ref m);
+        }
     }
 }
 
@@ -173,25 +185,31 @@ class InputKey : BlankKey
 {
     private class Style
     {
+        public readonly Color Color;
         public readonly Color BackColor;
 
-        private Style(Color backColor)
+        private Style(Color color, Color backColor)
         {
+            Color = color;
             BackColor = backColor;
         }
 
-        public static Style Create(Color backColor)
+        public static Style Create(Color color, Color backColor)
         {
-            return new Style(backColor);
+            return new Style(color, backColor);
         }
     }
 
     private readonly IDisposable Unsubscribe;
-    private static readonly Style KeyDefaultStyle = Style.Create(Color.DarkGray);
-    private static readonly Style KeyDownStyle = Style.Create(Color.Red);
+    private static readonly Style KeyDefaultStyle = Style.Create(Color.Black, Color.DarkGray);
+    private static readonly Style KeyDownStyle = Style.Create(Color.White, Color.Red);
+    private static readonly Style KeyUpStyle = Style.Create(Color.Black, Color.Red);
+    private static readonly Style KeyWarmStyle = Style.Create(Color.Black, Color.Gray);
+
     private static readonly List<Tuple<Style, int>> sequence = new List<Tuple<Style, int>> {
-        Tuple.Create(KeyDownStyle, 200),
-        Tuple.Create(Style.Create(Color.Gray), 0),
+        Tuple.Create(KeyUpStyle, 0),
+        Tuple.Create(KeyUpStyle, 200),
+        Tuple.Create(KeyWarmStyle, 0),
         Tuple.Create(KeyDefaultStyle, 3000)
     };
 
@@ -208,6 +226,8 @@ class InputKey : BlankKey
     {
         BorderStyle = BorderStyle.None;
         Text = keyCode.Label;
+
+        ForeColor = KeyDefaultStyle.Color;
         BackColor = KeyDefaultStyle.BackColor;
 
         var downStyle = keyEvents
@@ -220,7 +240,10 @@ class InputKey : BlankKey
 
         Unsubscribe = Observable
             .Switch(Observable.Merge(downStyle, upStyle))
-            .Do((style) => { base.BackColor = style.BackColor; })
+            .Do((style) => {
+                base.BackColor = style.BackColor;
+                base.ForeColor = style.Color;
+            })
             .Subscribe();
     }
 
@@ -228,6 +251,29 @@ class InputKey : BlankKey
     {
         Unsubscribe.Dispose();
         base.Dispose(disposing);
+    }
+}
+
+class RowPanel : FlowLayoutPanel
+{
+    public RowPanel(Label[] row)
+    {
+        FlowDirection = FlowDirection.LeftToRight;
+        AutoSize = true;
+        Controls.AddRange(row);
+        Margin = new Padding(0);
+    }
+
+    protected override void WndProc(ref Message m)
+    {
+        if (m.Msg == Defs.WM_NCHITTEST)
+        {
+            m.Result = (IntPtr)Defs.HTTRANSPARENT;
+        }
+        else
+        {
+            base.WndProc(ref m);
+        }
     }
 }
 
@@ -242,20 +288,23 @@ class KeyGrid : FlowLayoutPanel
         FlowDirection = FlowDirection.TopDown;
         Dock = DockStyle.Fill;
         BackColor = Color.Black;
-        Enabled = false;
 
         Controls.AddRange(keyLayout
             .Select(Enumerable.ToArray)
-            .Select(row =>
-            {
-                FlowLayoutPanel rowPanel = new FlowLayoutPanel();
-                rowPanel.FlowDirection = FlowDirection.LeftToRight;
-                rowPanel.AutoSize = true;
-                rowPanel.Controls.AddRange(row);
-                rowPanel.Margin = new Padding(0);
-                return rowPanel;
-            })
+            .Select(row => new RowPanel(row))
             .ToArray());
+    }
+
+    protected override void WndProc(ref Message m)
+    {
+        if (m.Msg == Defs.WM_NCHITTEST)
+        {
+            m.Result = (IntPtr)Defs.HTTRANSPARENT;
+        }
+        else
+        {
+            base.WndProc(ref m);
+        }
     }
 }
 

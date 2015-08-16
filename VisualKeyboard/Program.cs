@@ -208,8 +208,7 @@ class InputKey : BlankKey
 
     private static readonly List<Tuple<Style, int>> sequence = new List<Tuple<Style, int>> {
         Tuple.Create(KeyUpStyle, 0),
-        Tuple.Create(KeyUpStyle, 200),
-        Tuple.Create(KeyWarmStyle, 0),
+        Tuple.Create(KeyWarmStyle, 200),
         Tuple.Create(KeyDefaultStyle, 3000)
     };
 

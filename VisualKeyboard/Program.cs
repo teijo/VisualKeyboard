@@ -319,6 +319,11 @@ class MainWindow : Form
         SnapNear(screen.Bottom - Bottom, () => Top = screen.Bottom - Height);
     }
 
+    private static Tuple<uint, Rectangle> CreateHotspot(uint trigger, int x, int y, int w, int h)
+    {
+        return Tuple.Create(trigger, new Rectangle(x, y, w, h));
+    }
+
     protected override void WndProc(ref Message m)
     {
         const int BorderWidth = 8;
@@ -326,14 +331,14 @@ class MainWindow : Form
         if (m.Msg == Defs.WM_NCHITTEST || m.Msg == Defs.WM_MOUSEMOVE)
         {
             var boxes = new List<Tuple<uint, Rectangle>>() {
-                Tuple.Create(Defs.HTBOTTOMLEFT,  new Rectangle(0,                        Size.Height - BorderWidth, BorderWidth,                  BorderWidth)),
-                Tuple.Create(Defs.HTBOTTOM,      new Rectangle(BorderWidth,              Size.Height - BorderWidth, Size.Width - 2 * BorderWidth, BorderWidth)),
-                Tuple.Create(Defs.HTBOTTOMRIGHT, new Rectangle(Size.Width - BorderWidth, Size.Height - BorderWidth, BorderWidth,                  BorderWidth)),
-                Tuple.Create(Defs.HTRIGHT,       new Rectangle(Size.Width - BorderWidth, BorderWidth,               BorderWidth,                  Size.Height - 2 * BorderWidth)),
-                Tuple.Create(Defs.HTTOPRIGHT,    new Rectangle(Size.Width - BorderWidth, 0,                         BorderWidth,                  BorderWidth)),
-                Tuple.Create(Defs.HTTOP,         new Rectangle(BorderWidth,              0,                         Size.Width - 2 * BorderWidth, BorderWidth)),
-                Tuple.Create(Defs.HTTOPLEFT,     new Rectangle(0,                        0,                         BorderWidth,                  BorderWidth)),
-                Tuple.Create(Defs.HTLEFT,        new Rectangle(0,                        BorderWidth,               BorderWidth,                  Size.Height - 2 * BorderWidth))
+                CreateHotspot(Defs.HTBOTTOMLEFT,  0,                        Size.Height - BorderWidth, BorderWidth,                  BorderWidth),
+                CreateHotspot(Defs.HTBOTTOM,      BorderWidth,              Size.Height - BorderWidth, Size.Width - 2 * BorderWidth, BorderWidth),
+                CreateHotspot(Defs.HTBOTTOMRIGHT, Size.Width - BorderWidth, Size.Height - BorderWidth, BorderWidth,                  BorderWidth),
+                CreateHotspot(Defs.HTRIGHT,       Size.Width - BorderWidth, BorderWidth,               BorderWidth,                  Size.Height - 2 * BorderWidth),
+                CreateHotspot(Defs.HTTOPRIGHT,    Size.Width - BorderWidth, 0,                         BorderWidth,                  BorderWidth),
+                CreateHotspot(Defs.HTTOP,         BorderWidth,              0,                         Size.Width - 2 * BorderWidth, BorderWidth),
+                CreateHotspot(Defs.HTTOPLEFT,     0,                        0,                         BorderWidth,                  BorderWidth),
+                CreateHotspot(Defs.HTLEFT,        0,                        BorderWidth,               BorderWidth,                  Size.Height - 2 * BorderWidth)
             };
 
             Point clientPoint = PointToClient(new Point(m.LParam.ToInt32()));

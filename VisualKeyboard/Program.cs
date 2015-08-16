@@ -171,18 +171,33 @@ class BlankKey : Label
 
 class InputKey : BlankKey
 {
+    private class Style
+    {
+        public readonly Color BackColor;
+
+        private Style(Color backColor)
+        {
+            BackColor = backColor;
+        }
+
+        public static Style Create(Color backColor)
+        {
+            return new Style(backColor);
+        }
+    }
+
     private readonly IDisposable Unsubscribe;
-    private static readonly Color KeyDefaultColor = Color.DarkGray;
-    private static readonly Color KeyDownColor = Color.Red;
-    private static readonly List<Tuple<Color, int>> sequence = new List<Tuple<Color, int>> {
-        Tuple.Create(KeyDownColor, 200),
-        Tuple.Create(Color.Gray, 0),
-        Tuple.Create(KeyDefaultColor, 3000)
+    private static readonly Style KeyDefaultStyle = Style.Create(Color.DarkGray);
+    private static readonly Style KeyDownStyle = Style.Create(Color.Red);
+    private static readonly List<Tuple<Style, int>> sequence = new List<Tuple<Style, int>> {
+        Tuple.Create(KeyDownStyle, 200),
+        Tuple.Create(Style.Create(Color.Gray), 0),
+        Tuple.Create(KeyDefaultStyle, 3000)
     };
 
-    private static IObservable<Color> ColorSequence<T>(T _)
+    private static IObservable<Style> StyleSequence<T>(T _)
     {
-        return Observable.Generate((IEnumerator<Tuple<Color, int>>)sequence.GetEnumerator(),
+        return Observable.Generate((IEnumerator<Tuple<Style, int>>)sequence.GetEnumerator(),
             s => s.MoveNext(),
             s => s,
             s => s.Current.Item1,
@@ -193,19 +208,19 @@ class InputKey : BlankKey
     {
         BorderStyle = BorderStyle.None;
         Text = keyCode.Label;
-        BackColor = KeyDefaultColor;
+        BackColor = KeyDefaultStyle.BackColor;
 
-        var downColor = keyEvents
+        var downStyle = keyEvents
             .Where(eventType => eventType == EventType.DOWN)
-            .Select(_ => Util.ConstantObservable(KeyDownColor));
+            .Select(_ => Util.ConstantObservable(KeyDownStyle));
 
-        var upColor = keyEvents
+        var upStyle = keyEvents
             .Where(eventType => eventType == EventType.UP)
-            .Select(ColorSequence);
+            .Select(StyleSequence);
 
         Unsubscribe = Observable
-            .Switch(Observable.Merge(downColor, upColor))
-            .Do((color) => { base.BackColor = color; })
+            .Switch(Observable.Merge(downStyle, upStyle))
+            .Do((style) => { base.BackColor = style.BackColor; })
             .Subscribe();
     }
 

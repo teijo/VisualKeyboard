@@ -198,6 +198,12 @@ class InputKey : BlankKey
         {
             return new Style(color, backColor);
         }
+
+        public void Apply(Control control)
+        {
+            control.ForeColor = Color;
+            control.BackColor = BackColor;
+        }
     }
 
     private readonly IDisposable Unsubscribe;
@@ -226,8 +232,7 @@ class InputKey : BlankKey
         BorderStyle = BorderStyle.None;
         Text = keyCode.Label;
 
-        ForeColor = KeyDefaultStyle.Color;
-        BackColor = KeyDefaultStyle.BackColor;
+        KeyDefaultStyle.Apply(this);
 
         var downStyle = keyEvents
             .Where(eventType => eventType == EventType.DOWN)
@@ -239,10 +244,7 @@ class InputKey : BlankKey
 
         Unsubscribe = Observable
             .Switch(Observable.Merge(downStyle, upStyle))
-            .Do((style) => {
-                base.BackColor = style.BackColor;
-                base.ForeColor = style.Color;
-            })
+            .Do((style) => style.Apply(this))
             .Subscribe();
     }
 
